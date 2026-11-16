@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jyotish Darpan</title>
+<meta name="description" content="Vedic astrology in plain language: kundali, dashas, transits, Sade Sati, yogas and Nadi readings, calculated in your browser.">
+<meta name="theme-color" content="#0c0e24">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="wrap bar">
+    <a class="brand" href="#overview">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="3" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 3L37 37M37 3L3 37M20 3L3 20L20 37L37 20Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="20" cy="11.5" r="2.4" fill="currentColor"/></svg>
+      <span><b>Jyotish Darpan</b><small>ज्योतिष दर्पण · Vedic astrology, explained</small></span>
+    </a>
+    <button class="btn ghost" id="theme" type="button">Light / dark</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="home" hidden>
+    <div class="intro">
+      <h1>Your kundali, in words you can follow</h1>
+      <p>Enter the date, exact time and place of birth. Everything is calculated on your device; nothing is sent anywhere.</p>
+    </div>
+    <form id="form" class="card form" novalidate>
+      <div class="row"><label for="f-name">Name</label><input id="f-name" type="text" autocomplete="off" placeholder="Full name"></div>
+      <div class="row half"><label for="f-date">Date of birth</label><input id="f-date" type="date" required></div>
+      <div class="row half"><label for="f-time">Time of birth <small>24-hour, as exact as you can</small></label><input id="f-time" type="time" required></div>
+      <div class="row place"><label for="f-place">Place of birth</label>
+        <div class="inline"><input id="f-place" type="text" autocomplete="off" placeholder="Start typing a city"><button class="btn" type="button" id="online">Search online</button></div>
+        <div id="places" class="places" hidden></div></div>
+      <div class="row third"><label for="f-lat">Latitude <small>north is +</small></label><input id="f-lat" type="number" step="any" inputmode="decimal"></div>
+      <div class="row third"><label for="f-lon">Longitude <small>east is +</small></label><input id="f-lon" type="number" step="any" inputmode="decimal"></div>
+      <div class="row third"><label for="f-tz">Time zone</label><input id="f-tz" type="text" autocomplete="off" placeholder="Asia/Kolkata or +05:30"></div>
+      <div class="row half"><label for="f-gender">Gender <small>used only in the Nadi reading</small></label><select id="f-gender"><option value="">Prefer not to say</option><option value="m">Male</option><option value="f">Female</option></select></div>
+      <div class="row half"><label for="f-ayan">Ayanamsa <small>leave as Lahiri if unsure</small></label><select id="f-ayan"><option value="lahiri">Lahiri (standard)</option><option value="raman">B. V. Raman</option><option value="kp">Krishnamurti (KP)</option></select></div>
+      <p id="ferr" class="err" role="alert"></p>
+      <div class="row actions"><button class="btn primary big" type="submit">Create kundali</button></div>
+      <div id="saved" class="saved"></div>
+    </form>
+  </section>
+
+  <section id="report" hidden>
+    <div id="idbar" class="idbar"></div>
+    <nav id="tabs" class="tabs" aria-label="Sections"></nav>
+    <div id="view" class="view"></div>
+  </section>
+</main>
+
+<footer class="wrap foot"><p>Positions are astronomical calculations. Interpretations follow classical Vedic astrology texts and are offered for reflection. They are not medical, legal or financial advice.</p></footer>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+
+<script src="astronomy.min.js"></script>
+<script src="engine.js"></script>
+<script src="content.js"></script>
+<script src="interpret.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
