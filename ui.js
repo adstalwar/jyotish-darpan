@@ -147,6 +147,7 @@
         <h3>Your mind</h3><p>${D.MOONSIGN[p.Mo.sign]} Your birth star ${nk.name} adds a nature that is ${nk.trait}.</p>
         ${good.length ? `<h3>Strengths in the chart</h3><ul>${good.map(x => `<li><b>${x.name}.</b> ${x.meaning}</li>`).join('')}</ul>` : ''}
         ${care.length ? `<h3>Things to work with</h3><ul>${care.map(x => `<li><b>${x.name}.</b> ${x.meaning}${x.note ? ' ' + x.note : ''}</li>`).join('')}</ul>` : ''}
+        <h3>Day to day</h3><p><a href="#today">Today's reading</a> · <a href="#watch">Periods to watch</a> · <a href="#remedies">Simple remedies</a> · <a href="#gemstones">Gemstones</a></p>
         ${cd ? `<h3>The period you are in</h3><p>${D.DASHA[cd.m.lord]} <a href="#dasha">See the full timeline</a>.</p>` : ''}
       </section>
     </div>
@@ -322,7 +323,98 @@
       <section class="card"><h2>Glossary</h2><dl class="gloss">${Object.keys(D.GLOSSARY).map(k => `<dt id="g-${k}">${D.GLOSSARY[k][0]}</dt><dd>${D.GLOSSARY[k][1]}</dd>`).join('')}</dl></section></div>`;
   }
 
-  const TABS = [['overview', 'Overview', vOverview], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
+
+  /* ================= Today ================= */
+  const ft = d => d ? d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  function dayMoment() { const n = new Date(); return !st.dDate || sameDay(st.dDate, n) ? n : st.dDate; }
+  function remedyCard(p, why) {
+    const r = D.REMEDY[p];
+    return `<article class="card pcard pl-${p}"><header><span class="glyph">${D.PLANETS[p].glyph}</span><div><h3>${PN(p)} <small>${D.PLANETS[p].sa} · ${r.day}</small></h3>${why ? `<p class="hint">For you because it ${R.list(why)}.</p>` : `<p class="hint">Eases ${D.ILL[p]}.</p>`}</div></header>
+      <p class="mantra"><span lang="sa">${r.dev}</span><small>${r.tr} · ${r.when}</small></p>
+      <dl class="rem"><dt>Practice</dt><dd>${r.practice}</dd><dt>Give</dt><dd>${r.give} Best on ${r.day}.</dd><dt>Conduct</dt><dd>${r.conduct}</dd><dt>In daily life</dt><dd>${D.COPE[p]}</dd><dt>Fast</dt><dd>A light fast on ${r.day}: one simple meal after sunset. Skip it if you have a health condition, are pregnant or are on medication.</dd><dt>Colour</dt><dd>${D.ATTR[p][0]}. Wear it on ${r.day} or give cloth of this colour.</dd>${D.ATTR[p][1] !== '—' ? `<dt>Direction</dt><dd>${D.ATTR[p][1]}. Face this way for its mantra.</dd>` : ''}<dt>Rudraksha</dt><dd>${D.ATTR[p][3]}, a low-cost alternative to a gemstone. The pairing is from later tradition.</dd><dt>Gemstone</dt><dd>${D.GEM[p][0]} (${D.GEM[p][1]}). Check <a href="#gemstones">Gemstones</a> first: it may not suit your chart.</dd></dl>
+      <p class="hint"><b>Sources:</b> ${r.src}</p></article>`;
+  }
+  function vToday() {
+    const c = st.chart, when = dayMoment(), d = R.daily(c, when), now = new Date(), isToday = sameDay(when, now), cd = currentDasha(when), nk = D.NAK[d.mo.nak.index], T = D.TARA[d.tara];
+    const iso = new Date(when.getTime() - when.getTimezoneOffset() * 60000).toISOString().slice(0, 10), r = D.REMEDY[d.dayLord];
+    const tn = d.tithi % 15 === 14 ? (d.tithi > 14 ? 'Amavasya' : 'Purnima') : D.TITHI[d.tithi % 15];
+    const week = Array.from({ length: 7 }, (_, i) => { const x = new Date(when); x.setDate(x.getDate() + i); if (i) x.setHours(12, 0, 0, 0); return R.daily(c, x, true); });
+    return `<p class="lead">A daily reading from the Moon, the fastest mover. It combines the Moon's position counted from your birth Moon (${term('gochar', 'Chandra gochar')}) with the day's star counted from your birth star (Tara Bala). ${isToday ? 'Showing this moment.' : 'Showing midday on the chosen date.'}</p>
+    <div class="tctl left"><button class="btn icon" data-dshift="-1" title="Previous day">‹</button><input type="date" id="ddate" value="${iso}" aria-label="Date"><button class="btn icon" data-dshift="1" title="Next day">›</button><button class="btn" id="dtoday">Today</button></div>
+    <div class="grid two">
+      <section class="card now"><span class="k">${when.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span><h2 class="verdict">${d.verdict[0]} ${pill(d.score > 0 ? '+' + d.score : String(d.score), d.verdict[1])}</h2>
+        ${d.fromMoon === 8 ? `<div class="alert"><b>Chandrashtama.</b> The Moon is in the 8th sign from your Moon until ${ft(d.moonUntil)}. Keep the day simple.</div>` : ''}
+        <p><b>Moon in ${SN(d.mo.sign)}</b>, ${ord(d.fromMoon)} from your Moon and in your ${ord(d.house)} house (${D.HOUSES[d.house - 1].title.toLowerCase()}), until ${ft(d.moonUntil)}.</p><p>${D.MOONGO[d.fromMoon - 1]}</p>
+        <p><b>Star of the day: ${nk.name}</b>, until ${ft(d.nakUntil)}. Counted from your birth star it is <b>${T[0]} Tara</b> ${pill(T[1] > 0 ? 'Favourable' : T[1] < 0 ? 'Testing' : 'Sensitive', T[1] > 0 ? 'good' : T[1] < 0 ? 'bad' : 'warn')}. ${T[2]}</p>
+        <div class="grid doav"><div><h4>Good for</h4><ul>${d.doList.map(x => `<li>${x}</li>`).join('')}</ul></div><div><h4>Go easy on</h4><ul>${d.avoid.map(x => `<li>${x}</li>`).join('')}</ul></div></div></section>
+      <section class="card"><h2>The day in detail</h2>
+        <div class="kv"><div><span>Weekday</span><b>${D.VARA[d.wd][0]}</b><small>Ruled by ${PN(d.dayLord)}</small></div><div><span>${term('tithi', 'Tithi')}</span><b>${d.tithi > 14 ? 'Krishna' : 'Shukla'} ${tn}</b><small>${d.tithi > 14 ? 'Waning' : 'Waxing'} Moon</small></div><div><span>Yoga</span><b>${D.YOGA27[d.yoga]}</b><small>Sun and Moon combined</small></div>${cd ? `<div><span>${term('dasha', 'Running periods')}</span><b>${PN(cd.m.lord)} – ${PN(cd.a.lord)} – ${PN(cd.p.lord)}</b><small>Sub-sub-period until ${fd(cd.p.end)}</small></div>` : ''}</div>
+        <p>${d.dayNote}</p>
+        <h3>Other fast planets</h3>${d.fast.map(f => `<div class="trow slim">${pl(f.p)} ${pill(f.good ? 'Favourable' : 'Testing', f.good ? 'good' : 'warn')} <span>in ${SN(f.o.sign)}, your ${ord(f.o.house)} house (${D.HOUSES[f.o.house - 1].title.toLowerCase()})${f.o.retro ? ', retrograde' : ''}</span></div>`).join('')}
+        <h3>Simple practice for ${D.VARA[d.wd][0]}</h3><p class="mantra"><span lang="sa">${r.dev}</span><small>${r.tr} · ${r.when}</small></p><p>${r.practice} <a href="#remedies">All remedies</a></p></section>
+    </div>
+    <section class="card"><h2>The week ahead</h2><div class="week">${week.map((w, i) => `<button class="wday ${w.verdict[1]}" data-dday="${w.date.getTime()}"><b>${w.date.toLocaleDateString('en-GB', { weekday: 'short' })}</b><small>${w.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small><span>${w.verdict[0]}</span><small>Moon ${SN(w.mo.sign).slice(0, 3)} · ${ord(w.fromMoon)}</small><small>${D.TARA[w.tara][0]}</small></button>`).join('')}</div>
+      <p class="hint">The Moon changes sign about every two and a quarter days, so a day can shift partway through; open a day to see the exact times. This is a rule-based reading of the day's general tone, the same for everyone who shares your Moon sign and star, and is not a forecast of events.</p></section>`;
+  }
+
+  /* ================= Watch periods ================= */
+  function vWatch() {
+    const c = st.chart, yrs = st.wYears || 10, now = new Date(), W = R.watch(c, st.sat, now, yrs), span = W.to - W.from, pct = d => ((d - W.from) / span * 100);
+    const lane = (items, cat, soft) => `<div class="lane"><span class="ln">${cat}</span><div class="lt">${items.filter(i => i.cat === cat).map(i => `<span class="lb ${soft ? 'soft' : 's' + i.sev}" style="left:${pct(i.vfrom).toFixed(2)}%;width:${Math.max(0.4, pct(i.vto) - pct(i.vfrom)).toFixed(2)}%" title="${esc(i.title)}: ${fd(i.from)} – ${fd(i.to)}"></span>`).join('')}</div></div>`;
+    const ticks = Array.from({ length: yrs + 1 }, (_, i) => i).filter(i => yrs <= 10 || i % 5 === 0).map(i => `<i style="left:${(i / yrs * 100).toFixed(2)}%">${now.getFullYear() + i}</i>`).join('');
+    const SV = { 3: ['High', 'bad'], 2: ['Moderate', 'warn'], 1: ['Mild', ''] }, active = W.hard.filter(h => now >= h.from && now < h.to);
+    const card = h => `<article class="card wcard s${h.sev}"><header><div><h3>${h.title}</h3><span class="hint">${fd(h.from)} – ${fd(h.to)}${now >= h.from && now < h.to ? ' · <b>active now</b>' : ''}</span></div>${pill(SV[h.sev][0], SV[h.sev][1])}</header>
+      <dl class="rem"><dt>Why</dt><dd>${h.why}</dd><dt>What it can bring</dt><dd>${h.ill}</dd><dt>How to handle it</dt><dd>${h.cope}</dd><dt>Remedy</dt><dd>${h.planets.map(p => `${pl(p)} <span lang="sa">${D.REMEDY[p].dev}</span>, ${D.REMEDY[p].practice.toLowerCase().replace(/\.$/, '')}`).join('<br>')}. <a href="#remedies">Details</a></dd></dl></article>`;
+    return `<p class="lead">Stretches that classical rules mark as demanding, drawn from three sources: Saturn's passage near your Moon and Lagna, Rahu and Ketu crossing your key points, and dasha sub-periods whose ruling planet is weak or badly placed in your chart. Each one says why it is flagged, what it tends to bring, and what helps.</p>
+    <p class="note">These are periods to be careful in, not predictions of misfortune. Most pass as heavier workloads or slower progress. Overlapping bars matter more than any single one.</p>
+    <div class="seg" role="group" aria-label="Window">${[5, 10, 25].map(y => `<button data-wy="${y}" class="${yrs === y ? 'on' : ''}">Next ${y} years</button>`).join('')}</div>
+    <section class="card"><h2>Timeline</h2><div class="lanes">${lane(W.hard, 'Saturn')}${lane(W.hard, 'Nodes')}${lane(W.hard, 'Dasha')}${lane(W.soft, 'Jupiter', true)}${lane(W.soft, 'Dasha', true).replace('>Dasha<', '>Good dasha<')}<div class="lane"><span class="ln"></span><div class="sticks">${ticks}</div></div></div>
+      <div class="legend"><span><i class="lb s3"></i>High</span><span><i class="lb s2"></i>Moderate</span><span><i class="lb s1"></i>Mild</span><span><i class="lb soft"></i>Supportive</span></div></section>
+    <h2 class="sec">Active now</h2><div class="grid cards wide">${active.map(card).join('') || '<p>Nothing is flagged right now.</p>'}</div>
+    <h2 class="sec">Coming up</h2><div class="grid cards wide">${W.hard.filter(h => h.from > now).map(card).join('') || '<p>Nothing further is flagged in this window.</p>'}</div>
+    <h2 class="sec">Supportive windows</h2><section class="card"><div class="scroll"><table><thead><tr><th>Period</th><th>From</th><th>To</th><th>Why it helps</th></tr></thead><tbody>${W.soft.map(s => `<tr class="${now >= s.from && now < s.to ? 'cur' : ''}"><td>${s.title}</td><td>${fd(s.from)}</td><td>${fd(s.to)}</td><td>${s.why}</td></tr>`).join('') || '<tr><td colspan="4">None in this window.</td></tr>'}</tbody></table></div></section>
+    <h2 class="sec">Transitions in the next five years</h2><p class="hint">Changes of dasha and of the slow planets' signs. The weeks around a change are when life feels most unsettled.</p>
+    <section class="card"><div class="scroll"><table><thead><tr><th>Date</th><th>Change</th><th>What shifts</th><th>Possible strain</th><th>What helps</th></tr></thead><tbody>${W.trans.map(t => { const x = R.transitionText(c, t); return `<tr><td class="num">${fd(t.date)}</td><td>${pill(t.kind === 'transit' ? 'Transit' : 'Dasha', x.sev)}<br><b>${x.title}</b></td><td>${x.text}</td><td>${x.ill}</td><td>${x.cope}</td></tr>`; }).join('')}</tbody></table></div></section>`;
+  }
+
+  /* ================= Remedies ================= */
+  function vRemedies() {
+    const c = st.chart, plan = R.remedyPlan(c, st.sat, currentDasha()), top = plan.map(x => x.p), rest = J.P.filter(p => !top.includes(p));
+    return `<p class="lead">Simple things anyone can do without a priest, expense or special materials: a short mantra, one act of giving, and a habit. They are ordered for your chart, with the planets that most need support first.</p>
+    <section class="card prose"><h2>Where these come from</h2><p>The Vedas and Upanishads do not prescribe remedies planet by planet. The planet-wise giving and worship come from Brihat Parashara Hora Shastra and the Puranic tradition. What the Vedas contribute are the hymns tradition recites with them, and what the Upanishads contribute is conduct: truthfulness, study, and honouring mother, father and teacher. Each card names its source so you can see which is which.</p><p>Do one or two consistently instead of all of them occasionally. Giving and service count for more than recitation, and none of this replaces medical, legal or financial help. Gemstones have their own section, because whether a stone suits you depends on your Lagna: see <a href="#gemstones">Gemstones</a>.</p></section>
+    <h2 class="sec">Your priorities now</h2><div class="grid cards wide">${plan.map(x => remedyCard(x.p, x.why)).join('')}</div>
+    <h2 class="sec">For peace in any period</h2><section class="card"><div class="shanti">${D.SHANTI.map(s => `<div><p class="mantra"><span lang="sa">${s[0]}</span><small>${s[1]}</small></p><p>${s[3]}</p><p class="hint">${s[2]}</p></div>`).join('')}</div></section>
+    ${rest.length ? `<h2 class="sec">The other planets</h2><div class="grid cards wide">${rest.map(p => remedyCard(p)).join('')}</div>` : ''}`;
+  }
+
+
+  /* ================= Gemstones ================= */
+  function vGems() {
+    const c = st.chart, G = R.gemPlan(c, currentDasha()), CAT = { yes: ['Suits your chart', 'good'], maybe: ['Neutral, situational', 'warn'], avoid: ['Not advised', 'bad'] };
+    const card = g => { const m = D.GEM[g.p]; return `<article class="card pcard pl-${g.p} gcard"><header><span class="glyph">${D.PLANETS[g.p].glyph}</span><div><h3>${m[0]} <small>${m[1]} · for ${PN(g.p)}</small></h3>${pill(CAT[g.cat][0], CAT[g.cat][1])}</div></header><p>${g.why}</p>${g.notes.map(n => `<p class="note">${n}</p>`).join('')}
+      ${g.cat !== 'avoid' ? `<dl class="rem"><dt>Affordable substitute</dt><dd>${m[2]}</dd><dt>Metal</dt><dd>${m[3]}</dd><dt>Finger</dt><dd>${m[4]}, on the hand you work with</dd><dt>First worn</dt><dd>${m[5]}, after reciting <span lang="sa">${D.REMEDY[g.p].dev}</span> 108 times</dd><dt>Supports</dt><dd>${D.PLANETS[g.p].themes}</dd></dl>` : ''}</article>`; };
+    const by = k => G.gems.filter(g => g.cat === k).map(card).join('');
+    const L = G.lucky, days = [...new Set(L.map(p => D.REMEDY[p].day))];
+    return `<p class="lead">Each planet has a gemstone, and wearing it is said to strengthen that planet. That is why the stone must be chosen from your chart: strengthening a planet that rules a difficult house for your Lagna can make things worse. The verdicts below follow the standard rule based on which houses each planet rules for ${SN(c.asc.sign)} Lagna.</p>
+    <section class="card prose"><h2>Before you buy anything</h2><ul>
+      <li><b>There is no scientific evidence that gemstones change events.</b> The practice rests on tradition. Treat a stone as a support for intention, and never as a replacement for treatment, effort or professional advice.</li>
+      <li><b>A stone is optional.</b> Mantra, giving and conduct cost nothing and come first. See <a href="#remedies">Remedies</a>.</li>
+      <li><b>Start with the substitute.</b> Each stone has an inexpensive alternative that tradition accepts. Nobody needs to spend heavily or borrow for a gem.</li>
+      <li><b>Try before you commit.</b> Keep the stone with you for three to seven days first. Blue sapphire, hessonite and cat's eye in particular are always trialled. If sleep, mood or circumstances turn worse, stop.</li>
+      <li><b>Buy safely.</b> Ask for a certificate from an independent gem laboratory stating natural origin and any treatment. Be wary of anyone who predicts disaster unless you buy from them.</li>
+      <li><b>Size.</b> Common practice is 3 to 5 carats, set so the stone touches the skin. A larger or costlier stone is not better advice.</li>
+      <li><b>Source.</b> The planet-to-gem pairing comes from texts such as Jataka Parijata and the gem chapters of the Garuda Purana, not from the Vedas or Upanishads. The house-rulership rule used here is later Parashari practice, and astrologers differ on details.</li></ul></section>
+    <h2 class="sec">Stones that suit your chart</h2><div class="grid cards wide">${by('yes')}</div>
+    ${G.clash.length ? `<p class="note">Do not wear these together: ${G.clash.map(x => `${D.GEM[x[0]][0]} with ${D.GEM[x[1]][0]}`).join('; ')}. Their planets belong to opposing groups. Choose one.</p>` : '<p class="note">These stones belong to mutually friendly planets and can be worn together. If you want only one, take the first.</p>'}
+    <h2 class="sec">Neutral or situational</h2><div class="grid cards wide">${by('maybe') || '<p>None.</p>'}</div>
+    <h2 class="sec">Not advised for your chart</h2><div class="grid cards wide">${by('avoid') || '<p>None.</p>'}</div>
+    <h2 class="sec">Favourable for you</h2><section class="card"><p class="hint">From the planets that rule your Lagna, 5th and 9th houses: ${L.map(p => pl(p)).join(' ')}.</p>
+      <div class="kv"><div><span>Days</span><b>${days.join(', ')}</b><small>Good for beginnings</small></div><div><span>Colours</span><b>${L.map(p => D.ATTR[p][0].split(',')[0]).join(', ')}</b><small>For clothes and surroundings</small></div><div><span>Directions</span><b>${L.map(p => D.ATTR[p][1]).filter(x => x !== '—').join(', ')}</b><small>To face for work or prayer</small></div><div><span>Numbers</span><b>${L.map(p => D.ATTR[p][2]).join(', ')}</b><small>From popular numerology, not the classical texts</small></div><div><span>Metals</span><b>${[...new Set(L.map(p => D.GEM[p][3].split(' or ')[0].split(',')[0]))].join(', ')}</b><small>For rings and pendants</small></div></div></section>
+    <section class="card"><h2>All nine at a glance</h2><div class="scroll"><table><thead><tr><th>Planet</th><th>Gemstone</th><th>Substitute</th><th>Metal</th><th>Finger</th><th>For you</th></tr></thead><tbody>${J.P.map(p => { const g = G.gems.find(x => x.p === p), m = D.GEM[p]; return `<tr><td>${pl(p)}</td><td>${m[0]} <small>${m[1]}</small></td><td>${m[2]}</td><td>${m[3]}</td><td>${m[4]}</td><td>${pill(CAT[g.cat][0], CAT[g.cat][1])}</td></tr>`; }).join('')}</tbody></table></div></section>`;
+  }
+
+  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
 
   function render() {
     const c = st.chart; if (!c) return;
@@ -400,6 +492,10 @@
     else if ((el = q('[data-antar]'))) { st.aOpen = st.aOpen === el.dataset.antar ? null : el.dataset.antar; render(); }
     else if ((el = q('[data-nudge]'))) { const k = el.dataset.nudge, n = Object.assign({}, st.input.nudge || {}); if (n[k]) delete n[k]; else n[k] = 1; generate(Object.assign({}, st.input, { nudge: n }), true); }
     else if ((el = q('[data-shift]'))) { stopPlay(); st.tDate = new Date(st.tDate.getTime() + (+el.dataset.shift) * J.DAY); render(); }
+    else if ((el = q('[data-dshift]'))) { const x = new Date(dayMoment()); x.setDate(x.getDate() + (+el.dataset.dshift)); x.setHours(12, 0, 0, 0); st.dDate = x; render(); }
+    else if ((el = q('[data-dday]'))) { st.dDate = new Date(+el.dataset.dday); render(); window.scrollTo(0, 0); }
+    else if (t.id === 'dtoday') { st.dDate = null; render(); }
+    else if ((el = q('[data-wy]'))) { st.wYears = +el.dataset.wy; render(); }
     else if (t.id === 'today') { stopPlay(); st.tDate = new Date(); render(); }
     else if (t.id === 'play') {
       if (st.play) { stopPlay(); render(); }
@@ -417,6 +513,7 @@
   document.addEventListener('change', e => {
     if (e.target.id === 'tdate' && e.target.value) { stopPlay(); const d = e.target.value.split('-').map(Number); st.tDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
     if (e.target.id === 'speed') st.speed = +e.target.value;
+    if (e.target.id === 'ddate' && e.target.value) { const d = e.target.value.split('-').map(Number); st.dDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
   });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr[data-antar]')) { e.preventDefault(); e.target.click(); } if (e.key === 'Escape') hideTip(); });
   $('#f-place').addEventListener('input', e => searchLocal(e.target.value));
