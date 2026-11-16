@@ -147,7 +147,7 @@
         <h3>Your mind</h3><p>${D.MOONSIGN[p.Mo.sign]} Your birth star ${nk.name} adds a nature that is ${nk.trait}.</p>
         ${good.length ? `<h3>Strengths in the chart</h3><ul>${good.map(x => `<li><b>${x.name}.</b> ${x.meaning}</li>`).join('')}</ul>` : ''}
         ${care.length ? `<h3>Things to work with</h3><ul>${care.map(x => `<li><b>${x.name}.</b> ${x.meaning}${x.note ? ' ' + x.note : ''}</li>`).join('')}</ul>` : ''}
-        <h3>Day to day</h3><p><a href="#today">Today's reading</a> · <a href="#watch">Periods to watch</a> · <a href="#remedies">Simple remedies</a> · <a href="#gemstones">Gemstones</a></p>
+        <h3>Day to day</h3><p><a href="#today">Today's reading</a> · <a href="#watch">Periods to watch</a> · <a href="#remedies">Simple remedies</a> · <a href="#gemstones">Gemstones</a> · <a href="#portrait">Your portrait</a> · <a href="#match">Kundli matching</a></p>
         ${cd ? `<h3>The period you are in</h3><p>${D.DASHA[cd.m.lord]} <a href="#dasha">See the full timeline</a>.</p>` : ''}
       </section>
     </div>
@@ -414,7 +414,54 @@
     <section class="card"><h2>All nine at a glance</h2><div class="scroll"><table><thead><tr><th>Planet</th><th>Gemstone</th><th>Substitute</th><th>Metal</th><th>Finger</th><th>For you</th></tr></thead><tbody>${J.P.map(p => { const g = G.gems.find(x => x.p === p), m = D.GEM[p]; return `<tr><td>${pl(p)}</td><td>${m[0]} <small>${m[1]}</small></td><td>${m[2]}</td><td>${m[3]}</td><td>${m[4]}</td><td>${pill(CAT[g.cat][0], CAT[g.cat][1])}</td></tr>`; }).join('')}</tbody></table></div></section>`;
   }
 
-  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
+
+  /* ================= Portrait ================= */
+  function vPortrait() {
+    const c = st.chart, P = R.portrait(c, st.input.gender), blk = (t, a) => `<section class="card prose"><h2>${t}</h2>${a.map(x => `<p>${x}</p>`).join('')}</section>`;
+    return `<p class="lead">A sketch of the person the chart describes, put together from the ${term('lagna', 'Lagna')}, its ruling planet, the Moon and the birth star. Each part says how well the classical texts support it.</p>
+    <div class="grid tiles"><div class="tile"><span class="k">Temperament group</span><span class="v">${P.gana} gana</span><span class="sub">From the birth star</span></div><div class="tile"><span class="k">Constitution</span><span class="v">${P.nadi}</span><span class="sub">Nadi of the birth star</span></div><div class="tile"><span class="k">Symbolic animal</span><span class="v">${P.star.yoni}</span><span class="sub">Yoni of the birth star</span></div><div class="tile"><span class="k">Leading element</span><span class="v">${D.SIGNS[c.asc.sign].element} Lagna</span><span class="sub">${D.SIGNS[c.asc.sign].quality} sign</span></div></div>
+    <div class="grid two">${blk('Personality and temperament', P.temper)}
+      <div class="view inner">${blk('Build and appearance', P.body.concat(['<span class="hint">Well described in the texts, but real bodies follow family and lifestyle more than the chart. Read it as what tradition expects, not a description of you.</span>']))}
+      ${blk('Friends and social circle', P.friends)}</div></div>
+    <div class="grid two"><section class="card prose"><h2>Interests and talents</h2><p class="hint">From the planets in your 1st, 3rd, 5th and 10th houses, the rulers of the 3rd and 5th, and your strongest planets.</p><ul>${P.interests.map(i => `<li>${pl(i.p)} ${i.text}</li>`).join('')}</ul></section>${blk('Pets and animals', P.pets)}</div>
+    <section class="card prose"><h2>Life advice</h2><p><b>For your nature:</b> ${P.advice[0]}</p>${P.advice.slice(1).map(a => `<p>${a}</p>`).join('')}
+      <div class="grid doav"><div><h4>Lean on these</h4><ul>${P.lean.map(a => `<li><b>${a.title}</b> ${stars(a.stars)}<br><span class="hint">Your strongest ground. Build here first.</span></li>`).join('')}</ul></div><div><h4>Give patient effort to these</h4><ul>${P.work.map(a => `<li><b>${a.title}</b> ${stars(a.stars)}<br><span class="hint">Results come slower here; steady routine beats bursts.</span></li>`).join('')}</ul></div></div>
+      <p class="hint">Details for each are under <a href="#life">Life areas</a>; practices that help are under <a href="#remedies">Remedies</a>.</p></section>`;
+  }
+
+  /* ================= Matching ================= */
+  function vMatch() {
+    const c = st.chart, m = st.partner, mine = st.input.gender === 'f' ? 'bride' : 'groom', role = st.mRole || (mine === 'groom' ? 'bride' : 'groom');
+    let res = '';
+    if (m && m.chart) {
+      const g = role === 'bride' ? c : m.chart, b = role === 'bride' ? m.chart : c, M = R.match(g, b), gn = role === 'bride' ? (st.input.name || 'This chart') : (m.name || 'Partner'), bn = role === 'bride' ? (m.name || 'Partner') : (st.input.name || 'This chart');
+      const who = (n, x) => `<div><span class="k">${n}</span><b>${SN(x.sign)} Moon</b><small>${D.NAK[x.nak].name} · ${D.GANANAME[x.gana][0]} gana · ${x.yoni} · ${D.NADINAME[x.nadi]}</small></div>`;
+      res = `<section class="card now"><div class="mscore"><div class="dial ${M.verdict[1]}"><b>${M.total % 1 ? M.total.toFixed(1) : M.total}</b><small>of 36</small></div><div><h2>${M.verdict[0]}</h2><p>18 is the traditional minimum, 24 and above is good, 32 and above is excellent.</p><div class="kv">${who(esc(gn) + ' (groom)', M.g)}${who(esc(bn) + ' (bride)', M.b)}</div></div></div>
+        <ul>${M.flags.map(f => `<li>${f}</li>`).join('')}</ul></section>
+      <section class="card"><h2>The eight tests</h2><div class="scroll"><table><thead><tr><th>Koota</th><th>Tests</th><th>Points</th><th></th><th>Detail</th></tr></thead><tbody>${M.kutas.map(k => `<tr><td><b>${k.name}</b></td><td>${k.about}</td><td class="num">${k.pts} / ${k.max}</td><td><span class="mbar"><i style="width:${(k.pts / k.max * 100).toFixed(0)}%" class="${k.pts / k.max >= 0.75 ? 'good' : k.pts / k.max >= 0.4 ? 'warn' : 'bad'}"></i></span></td><td>${k.detail}</td></tr>`).join('')}</tbody></table></div>
+        <p class="hint">The system is written for a bride and groom, and three tests (Varna, Vashya, Gana) score differently depending on which chart is which. Scoring tables for Vashya and Gana vary slightly between almanacs, so another app may differ by a point or two.</p></section>`;
+    }
+    return `<p class="lead">Kundli matching (Ashtakoota Guna Milan) compares two people's Moon signs and birth stars on eight tests worth 36 points. It needs only the partner's birth details.</p>
+    <p class="note">The score measures one traditional idea of compatibility. It cannot see character, values or how two people treat each other, and astrologers also compare the full charts. Do not accept or reject a person on this number alone.</p>
+    <section class="card"><h2>Partner's birth details</h2><form id="mform" class="form mform" novalidate>
+      <div class="row half"><label for="m-name">Name</label><input id="m-name" type="text" autocomplete="off" value="${esc(m ? m.name : '')}"></div>
+      <div class="row half"><label for="m-role">Partner is the</label><select id="m-role"><option value="bride" ${role === 'bride' ? 'selected' : ''}>Bride</option><option value="groom" ${role === 'groom' ? 'selected' : ''}>Groom</option></select></div>
+      <div class="row half"><label for="m-date">Date of birth</label><input id="m-date" type="date" value="${m ? m.date : ''}"></div>
+      <div class="row half"><label for="m-time">Time of birth</label><input id="m-time" type="time" value="${m ? m.time : ''}"></div>
+      <div class="row"><label for="m-place">Place of birth <small>pick from the list, or fill the three fields below</small></label><input id="m-place" type="text" list="citylist" autocomplete="off" value="${esc(m ? m.place : '')}"><datalist id="citylist">${D.CITIES.map(x => `<option value="${esc(x.name + ', ' + x.region)}">`).join('')}</datalist></div>
+      <div class="row third"><label for="m-lat">Latitude</label><input id="m-lat" type="number" step="any" value="${m ? m.lat : ''}"></div><div class="row third"><label for="m-lon">Longitude</label><input id="m-lon" type="number" step="any" value="${m ? m.lon : ''}"></div><div class="row third"><label for="m-tz">Time zone</label><input id="m-tz" type="text" value="${esc(m ? m.tz : '')}" placeholder="Asia/Kolkata"></div>
+      <p id="merr" class="err" role="alert"></p><div class="row actions"><button class="btn primary" type="submit">Compare charts</button></div></form></section>${res}`;
+  }
+  function runMatch() {
+    const v = id => $('#' + id).value.trim(), err = t => { $('#merr').textContent = t; };
+    const d = v('m-date').split('-').map(Number), t = v('m-time').split(':').map(Number), lat = parseFloat(v('m-lat')), lon = parseFloat(v('m-lon')); let tz = v('m-tz');
+    if (d.length !== 3 || !d[0]) return err("Enter the partner's date of birth."); if (t.length < 2 || isNaN(t[0])) return err("Enter the partner's time of birth. If unknown, use 12:00; the score depends on the Moon, which moves about half a degree an hour.");
+    if (isNaN(lat) || isNaN(lon)) return err('Pick a place from the list or enter latitude and longitude.');
+    const mm = tz.match(/^([+-])(\d{1,2})(?::?(\d{2}))?$/); let tzv = tz; if (mm) tzv = (mm[1] === '-' ? -1 : 1) * (+mm[2] * 60 + (+mm[3] || 0)); else { try { new Intl.DateTimeFormat('en', { timeZone: tz }); } catch (e) { return err('Time zone must be a name such as Asia/Kolkata or an offset such as +05:30.'); } }
+    try { st.partner = { name: v('m-name'), date: v('m-date'), time: v('m-time'), place: v('m-place'), lat, lon, tz, chart: J.compute({ y: d[0], m: d[1], d: d[2], h: t[0], min: t[1], lat, lon, tz: tzv, ayanamsa: st.chart.ayanamsaSys }) }; st.mRole = v('m-role'); render(); } catch (e) { err('Could not compute the chart: ' + e.message); }
+  }
+
+  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
 
   function render() {
     const c = st.chart; if (!c) return;
@@ -427,7 +474,7 @@
   function generate(input, keepTab) {
     try {
       st.chart = J.compute(input); st.input = input; st.sat = J.saturnCycles(st.chart, st.chart.ayanamsaSys);
-      st.mOpen = st.aOpen = null; st.tcache = {}; st.selHouse = 1; st.aspP = null;
+      st.mOpen = st.aOpen = null; st.partner = null; st.tcache = {}; st.selHouse = 1; st.aspP = null;
       $('#home').hidden = true; $('#report').hidden = false; if (!keepTab) { st.tab = 'overview'; if (location.hash && location.hash !== '#overview') location.hash = 'overview'; }
       render(); window.scrollTo(0, 0);
     } catch (e) { $('#ferr').textContent = 'Could not compute the chart: ' + e.message; }
@@ -517,6 +564,8 @@
   });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr[data-antar]')) { e.preventDefault(); e.target.click(); } if (e.key === 'Escape') hideTip(); });
   $('#f-place').addEventListener('input', e => searchLocal(e.target.value));
+  document.addEventListener('submit', e => { if (e.target.id === 'mform') { e.preventDefault(); runMatch(); } });
+  document.addEventListener('input', e => { if (e.target.id === 'm-place') { const c = D.CITIES.find(x => x.name + ', ' + x.region === e.target.value); if (c) { $('#m-lat').value = c.lat; $('#m-lon').value = c.lon; $('#m-tz').value = c.tz; } } });
   $('#form').addEventListener('submit', e => { e.preventDefault(); const i = readForm(); if (!i) return; saveProfile(i); generate(i); });
   window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.some(x => x[0] === h) && h !== st.tab) { stopPlay(); st.tab = h; render(); window.scrollTo(0, 0); } });
 

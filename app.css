@@ -143,3 +143,7 @@ details { margin-top: .5rem; } summary { cursor: pointer; color: var(--accent); 
 @media (max-width: 560px) { .rem { grid-template-columns: 1fr; gap: 0 0; } .rem dd { margin-bottom: .4rem; } .lane { grid-template-columns: 4.6rem 1fr; } }
 
 .gcard header .pill { margin-top: .3rem; }
+
+.view.inner { padding: 0; } .mform { max-width: none; margin: 0; border: 0; padding: 0; }
+.mscore { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; } .dial { width: 7.5rem; height: 7.5rem; border-radius: 50%; border: 6px solid var(--muted); display: grid; place-content: center; text-align: center; flex: none; } .dial b { font: 400 2.4rem var(--display); line-height: 1; } .dial.good { border-color: var(--good); } .dial.warn { border-color: var(--warn); } .dial.bad { border-color: var(--bad); }
+.mbar { display: block; width: 90px; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin-top: .45rem; } .mbar i { display: block; height: 100%; } .mbar .good { background: var(--good); } .mbar .warn { background: var(--warn); } .mbar .bad { background: var(--bad); }

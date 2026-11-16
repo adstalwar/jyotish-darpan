@@ -1,6 +1,6 @@
 # Jyotish Darpan
 
-Vedic astrology in plain language. Kundali (North and South Indian styles), Navamsa and Dasamsa, planet positions, Vimshottari dasha to three levels, live transits with an animated zodiac wheel, Sade Sati and Dhaiya for a whole life, yogas and doshas, house-by-house life readings, a Bhrigu Nandi Nadi reading, a daily reading, periods to watch with transitions, simple remedies with their sources, and chart-specific gemstone guidance.
+Vedic astrology in plain language. Kundali (North and South Indian styles), Navamsa and Dasamsa, planet positions, Vimshottari dasha to three levels, live transits with an animated zodiac wheel, Sade Sati and Dhaiya for a whole life, yogas and doshas, house-by-house life readings, a Bhrigu Nandi Nadi reading, a daily reading, periods to watch with transitions, simple remedies with their sources, chart-specific gemstone guidance, a personality portrait, and kundli matching (Ashtakoota, 36 points).
 
 Everything runs in the browser. No server, no API keys, no data leaves the device.
 
@@ -34,7 +34,8 @@ Any static server works:
 | `engine.js` | Astronomy and Vedic calculations |
 | `content.js` | Reference data, interpretation texts, glossary, city list |
 | `interpret.js` | Yoga, dosha, life-area, dasha and Nadi rules |
-| `guidance.js` | Daily reading, watch periods, transitions and remedies |
+| `guidance.js` | Daily reading, watch periods, transitions, remedies and gemstones |
+| `portrait.js` | Personality portrait and kundli matching |
 | `ui.js`, `app.css`, `index.html` | Interface |
 | `sw.js`, `manifest.webmanifest` | Offline install |
 
