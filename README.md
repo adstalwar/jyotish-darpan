@@ -1,6 +1,6 @@
 # Jyotish Darpan
 
-Vedic astrology in plain language. Kundali (North and South Indian styles), Navamsa and Dasamsa, planet positions, Vimshottari dasha to three levels, live transits with an animated zodiac wheel, Sade Sati and Dhaiya for a whole life, yogas and doshas, house-by-house life readings, a Bhrigu Nandi Nadi reading, a daily reading, periods to watch with transitions, simple remedies with their sources, chart-specific gemstone guidance, a personality portrait, kundli matching (Ashtakoota, 36 points), an interface in English, Hindi, Telugu and Punjabi, and AstroGuru, a Claude assistant that answers questions about the chart.
+Vedic astrology in plain language. Kundali (North and South Indian styles), Navamsa and Dasamsa, planet positions, Vimshottari dasha to three levels, live transits with an animated zodiac wheel, Sade Sati and Dhaiya for a whole life, yogas and doshas, house-by-house life readings, a Bhrigu Nandi Nadi reading, a daily reading, periods to watch with transitions, simple remedies with their sources, chart-specific gemstone guidance, a personality portrait, kundli matching (Ashtakoota, 36 points), good and bad times of the day (Rahu Kaal, Abhijit and others), a printable Kundali report (PDF), an interface in English, Hindi, Telugu and Punjabi, and AstroGuru, a Claude assistant that answers questions about the chart.
 
 Everything runs in the browser. No server, no API keys, no data leaves the device.
 

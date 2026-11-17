@@ -354,6 +354,7 @@
         <h3>Other fast planets</h3>${d.fast.map(f => `<div class="trow slim">${pl(f.p)} ${pill(f.good ? 'Favourable' : 'Testing', f.good ? 'good' : 'warn')} <span>in ${SN(f.o.sign)}, your ${ord(f.o.house)} house (${D.HOUSES[f.o.house - 1].title.toLowerCase()})${f.o.retro ? ', retrograde' : ''}</span></div>`).join('')}
         <h3>Simple practice for ${D.VARA[d.wd][0]}</h3><p class="mantra"><span lang="sa">${r.dev}</span><small>${r.tr} · ${r.when}</small></p><p>${r.practice} <a href="#remedies">All remedies</a></p></section>
     </div>
+    ${timesHTML(isToday ? null : when, 'Good and bad times of the day')}
     <section class="card"><h2>The week ahead</h2><div class="week">${week.map((w, i) => `<button class="wday ${w.verdict[1]}" data-dday="${w.date.getTime()}"><b>${w.date.toLocaleDateString('en-GB', { weekday: 'short' })}</b><small>${w.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</small><span>${w.verdict[0]}</span><small>Moon ${SN(w.mo.sign).slice(0, 3)} · ${ord(w.fromMoon)}</small><small>${D.TARA[w.tara][0]}</small></button>`).join('')}</div>
       <p class="hint">The Moon changes sign about every two and a quarter days, so a day can shift partway through; open a day to see the exact times. This is a rule-based reading of the day's general tone, the same for everyone who shares your Moon sign and star, and is not a forecast of events.</p></section>`;
   }
@@ -417,9 +418,10 @@
 
   /* ================= Portrait ================= */
   function vPortrait() {
-    const c = st.chart, P = R.portrait(c, st.input.gender), blk = (t, a) => `<section class="card prose"><h2>${t}</h2>${a.map(x => `<p>${x}</p>`).join('')}</section>`;
+    const c = st.chart, P = R.portrait(c, st.input.gender), CH = R.character(c, st.input.gender), FG = R.figure(c), blk = (t, a) => `<section class="card prose"><h2>${t}</h2>${a.map(x => `<p>${x}</p>`).join('')}</section>`;
     return `<p class="lead">A sketch of the person the chart describes, put together from the ${term('lagna', 'Lagna')}, its ruling planet, the Moon and the birth star. Each part says how well the classical texts support it.</p>
     <div class="grid tiles"><div class="tile"><span class="k">Temperament group</span><span class="v">${P.gana} gana</span><span class="sub">From the birth star</span></div><div class="tile"><span class="k">Constitution</span><span class="v">${P.nadi}</span><span class="sub">Nadi of the birth star</span></div><div class="tile"><span class="k">Symbolic animal</span><span class="v">${P.star.yoni}</span><span class="sub">Yoni of the birth star</span></div><div class="tile"><span class="k">Leading element</span><span class="v">${D.SIGNS[c.asc.sign].element} Lagna</span><span class="sub">${D.SIGNS[c.asc.sign].quality} sign</span></div></div>
+    <div class="grid charx"><div class="card figcard">${FG.svg}<p class="hint">Build as tradition describes it: ${FG.height}, ${FG.build}, ${FG.face} face. An illustration of proportions, not a likeness.</p></div><section class="card prose"><h2>Character sketch</h2><p class="hint">Written from the rising sign, the Moon, the strongest planet and the houses of work, partnership and money. Where the chart pulls two ways, it says so.</p>${CH.map(x => `<h3>${x[0]}</h3>${x[1].map(y => `<p>${y}</p>`).join('')}`).join('')}</section></div>
     <div class="grid two">${blk('Personality and temperament', P.temper)}
       <div class="view inner">${blk('Build and appearance', P.body.concat(['<span class="hint">Well described in the texts, but real bodies follow family and lifestyle more than the chart. Read it as what tradition expects, not a description of you.</span>']))}
       ${blk('Friends and social circle', P.friends)}</div></div>
@@ -461,13 +463,13 @@
     try { st.partner = { name: v('m-name'), date: v('m-date'), time: v('m-time'), place: v('m-place'), lat, lon, tz, chart: J.compute({ y: d[0], m: d[1], d: d[2], h: t[0], min: t[1], lat, lon, tz: tzv, ayanamsa: st.chart.ayanamsaSys }) }; st.mRole = v('m-role'); render(); } catch (e) { err('Could not compute the chart: ' + e.message); }
   }
 
-  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
+  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['kundali', 'Kundali PDF', vKundali], ['learn', 'Learn', vLearn]];
 
-  const GROUPS = [['You', ['overview', 'today', 'portrait', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['remedies', 'gemstones', 'match']], ['More', ['nadi', 'learn']]];
+  const GROUPS = [['You', ['overview', 'today', 'portrait', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['remedies', 'gemstones', 'match']], ['More', ['nadi', 'kundali', 'learn']]];
   function render() {
     const c = st.chart; if (!c) return;
     const i = st.input, t = TABS.find(x => x[0] === st.tab) || TABS[0];
-    $('#idbar').innerHTML = `<div><h1>${esc(i.name || 'Kundali')}</h1><p>${new Date(Date.UTC(i.y, i.m - 1, i.d)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })} · ${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')} · ${esc(i.place || '')}${i.sample ? ' · <b>sample chart</b>' : ''}</p></div><div class="idact"><button class="btn" id="edit">Edit details</button>${framed ? '' : '<button class="btn" id="print">Print</button>'}</div>`;
+    $('#idbar').innerHTML = `<div><h1>${esc(i.name || 'Kundali')}</h1><p>${new Date(Date.UTC(i.y, i.m - 1, i.d)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })} · ${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')} · ${esc(i.place || '')}${i.sample ? ' · <b>sample chart</b>' : ''}</p></div><div class="idact"><button class="btn" id="edit">Edit details</button><a class="btn" href="#kundali">Kundali PDF</a></div>`;
     $('#tabs').innerHTML = GROUPS.map(g => `<div class="ng"><span class="k">${g[0]}</span>${g[1].map(id => { const x = TABS.find(y => y[0] === id); return `<a href="#${id}" class="${id === t[0] ? 'on' : ''}" ${id === t[0] ? 'aria-current="page"' : ''}>${x[1]}</a>`; }).join('')}</div>`).join('');
     $('#tabs').classList.remove('open'); $('#navbtn').innerHTML = `<span><i aria-hidden="true">☰</i> <span>Menu</span></span><b>${t[1]}</b>`;
     $('#view').innerHTML = t[2]();
@@ -476,7 +478,7 @@
   function generate(input, keepTab) {
     try {
       st.chart = J.compute(input); st.input = input; st.sat = J.saturnCycles(st.chart, st.chart.ayanamsaSys);
-      st.mOpen = st.aOpen = null; st.partner = null; GURU.msgs = []; cancelAnimationFrame(HERO.raf); st.tcache = {}; st.selHouse = 1; st.aspP = null;
+      st.mOpen = st.aOpen = null; st.partner = null; GURU.msgs = []; cancelAnimationFrame(HERO.raf); $('#daytimes').innerHTML = ''; st.tcache = {}; st.selHouse = 1; st.aspP = null;
       $('#home').hidden = true; $('#report').hidden = false; if (!keepTab) { st.tab = 'overview'; if (location.hash && location.hash !== '#overview') location.hash = 'overview'; }
       render(); window.scrollTo(0, 0);
     } catch (e) { $('#ferr').textContent = 'Could not compute the chart: ' + e.message; }
@@ -560,9 +562,12 @@
     else if ((el = q('[data-hp]'))) { const k = el.dataset.hp, P = D.PLANETS[k], lon = HERO.lons[k]; heroInfo(`<b class="pl-${k}">${P.glyph} ${P.name}</b> (${P.sa}, <span lang="hi">${P.dev}</span>) stands for ${P.themes}. On this date it is in <b>${SN(Math.floor(lon / 30))}</b> at ${dms(lon % 30)}, in the star ${D.NAK[Math.floor(lon / (360 / 27))].name}.`); }
     else if ((el = q('[data-hs]'))) { const i = +el.dataset.hs, S = D.SIGNS[i], inn = J.P.filter(k => Math.floor(HERO.lons[k] / 30) === i); heroInfo(`<b>${S.glyph} ${S.name}</b> (${S.sa}, <span lang="hi">${S.dev}</span>) is a ${S.quality.toLowerCase()} ${S.element.toLowerCase()} sign ruled by ${PN(J.SIGN_LORD[i])}. ${inn.length ? 'Here on this date: ' + inn.map(PN).join(', ') + '.' : 'No planet is here on this date.'}`); }
     else if ((el = q('[data-hn]'))) { const n = D.NAK[+el.dataset.hn]; heroInfo(`<b>${n.name}</b> is one of the 27 nakshatras, the Moon's daily stations. Symbol: ${n.symbol}. Deity: ${n.deity}. People born under it are ${n.trait}.${el.classList.contains('on') ? ' The Moon is here on this date.' : ''}`); }
-    else if (t.id === 'gstart') guruSend('Welcome me in three sentences, naming my Lagna, Moon sign and current dasha. Then suggest three questions I could ask you.');
+    else if (t.id === 'gstart') { GURU.started = true; render(); }
+    else if ((el = q('[data-gdepth]'))) { GURU.depth = el.dataset.gdepth; render(); }
     else if ((el = q('[data-gq]'))) guruSend(el.dataset.gq);
     else if (t.id === 'gclear') { GURU.msgs = []; render(); }
+    else if (t.id === 'rprint') { try { window.print(); } catch (x) { } }
+    else if (t.id === 'rsave') reportSave();
     else if (t.id === 'print') { try { window.print(); } catch (x) { } }
     else if (t.id === 'online') searchOnline();
     else if (t.id === 'theme') { const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; store.set('jd.theme', r.dataset.theme); }
@@ -575,6 +580,7 @@
     if (e.target.id === 'tdate' && e.target.value) { stopPlay(); const d = e.target.value.split('-').map(Number); st.tDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
     if (e.target.id === 'speed') st.speed = +e.target.value;
     if (e.target.id === 'lang') setLang(e.target.value);
+    if (e.target.id === 'mcity') { const c = D.CITIES.find(x => x.name + ', ' + x.region === e.target.value); if (c) { store.set('jd.city', c); if ($('#home').hidden) render(); else paintTimes(); } }
     if (['f-date', 'f-time', 'f-tz'].includes(e.target.id)) heroFromForm();
     if (e.target.id === 'ddate' && e.target.value) { const d = e.target.value.split('-').map(Number); st.dDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
   });
@@ -611,7 +617,7 @@
       s += `<path class="hsign ${i % 2 ? 'alt' : ''}" data-hs="${i}" d="${arc(i * 30, i * 30 + 30, 254, 198)}"><title>${SN(i)} · ${D.SIGNS[i].sa}</title></path><text class="hglyph" x="${f(g[0])}" y="${f(g[1] + 7)}" text-anchor="middle">${D.SIGNS[i].glyph}</text><text class="hname" x="${f(n[0])}" y="${f(n[1] + 4)}" text-anchor="middle">${D.SIGNS[i].dev}</text>`;
     }
     [180, 152, 124].forEach(r => s += `<circle class="horb" cx="${c}" cy="${c}" r="${r}"/>`);
-    s += `<g class="hyantra"><rect x="${c - 46}" y="${c - 46}" width="92" height="92"/><path d="M${c - 46} ${c - 46}L${c + 46} ${c + 46}M${c + 46} ${c - 46}L${c - 46} ${c + 46}M${c} ${c - 46}L${c - 46} ${c}L${c} ${c + 46}L${c + 46} ${c}Z"/></g>`;
+    s += `<g class="hyantra"><rect x="${c - 46}" y="${c - 46}" width="92" height="92"/><path d="M${c - 46} ${c - 46}L${c + 46} ${c + 46}M${c + 46} ${c - 46}L${c - 46} ${c + 46}M${c} ${c - 46}L${c - 46} ${c}L${c} ${c + 46}L${c + 46} ${c}Z"/><circle cx="${c}" cy="${c - 23}" r="6.5"/></g>`;
     const arr = J.P.map(k => ({ k, lon: lons[k] })).sort((a, b) => a.lon - b.lon); let prev = null;
     arr.forEach(o => {
       o.lv = prev && o.lon - prev.lon < 10 ? (prev.lv + 1) % 3 : 0; prev = o; const [x, y] = pt(o.lon, 180 - o.lv * 28), e = pt(o.lon, 198);
@@ -636,7 +642,7 @@
   function showHome(toForm) {
     stopPlay(); $('#report').hidden = true; $('#home').hidden = false; $('#back').hidden = !st.chart;
     $('#features').innerHTML = FEATS.map(x => `<button class="feat" data-demo="${x[0]}" type="button"><i data-noi18n lang="hi">${x[1]}</i><span><b>${x[2]}</b><small>${x[3]}</small></span></button>`).join('');
-    HERO.mode = 'now'; HERO.base = new Date(); $('#hscrub').value = 0; $('#herocap').textContent = 'The sky right now'; heroSet(HERO.base, false); drawStars();
+    HERO.mode = 'now'; HERO.base = new Date(); $('#hscrub').value = 0; $('#herocap').textContent = 'The sky right now'; heroSet(HERO.base, false); drawStars(); paintTimes();
     if (toForm) $('#form').scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
   }
   function heroFromForm() {
@@ -646,52 +652,237 @@
   }
 
   /* ================= AstroGuru (Claude) ================= */
-  const GURU = { msgs: [], busy: false, api: undefined, started: false };
+  const GURU = { msgs: [], busy: false, api: undefined, started: false, depth: 'brief', err: '' };
   function guruContext() {
     const c = st.chart, i = st.input, p = c.planets, cd = currentDasha(), now = new Date(), L = [];
-    L.push(`Person: ${i.name || 'not given'}; born ${i.d}-${i.m}-${i.y} ${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')} local time at ${i.place || 'unknown place'}; gender ${i.gender || 'not given'}. Today is ${now.toDateString()}.`);
+    L.push(`Person: ${i.name || 'not given'}; born ${i.d}-${i.m}-${i.y} ${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')} local time at ${i.place || 'unknown place'}; gender ${i.gender || 'not given'}; age ${age(now, c)}. Today is ${now.toDateString()}.`);
     L.push(`Lagna ${SN(c.asc.sign)} ${dms(c.asc.deg)}. Moon sign ${SN(p.Mo.sign)}, birth star ${D.NAK[p.Mo.nak.index].name} pada ${p.Mo.nak.pada}. Ayanamsa ${c.ayanamsaSys}. Whole-sign houses.`);
-    L.push('Planets: ' + J.P.map(k => `${PN(k)} ${SN(p[k].sign)} ${dms(p[k].deg)} house ${p[k].house} ${D.NAK[p[k].nak.index].name}-${p[k].nak.pada} ${p[k].dignity}${p[k].retro && k !== 'Ra' && k !== 'Ke' ? ' retrograde' : ''}${p[k].combust ? ' combust' : ''}${p[k].cusp ? ' ON SIGN BORDER (uncertain sign)' : ''}`).join('; '));
-    L.push('House lords: ' + c.houses.map(h => `H${h.num} ${SN(h.sign)} lord ${PN(h.lord)} in H${p[h.lord].house}`).join('; '));
-    if (cd) { const up = J.subPeriods(cd.m).filter(a => a.start > now).slice(0, 4); L.push(`Vimshottari now: ${PN(cd.m.lord)} mahadasha (${fd(cd.m.start)} to ${fd(cd.m.end)}), ${PN(cd.a.lord)} antardasha (to ${fd(cd.a.end)}), ${PN(cd.p.lord)} pratyantar (to ${fd(cd.p.end)}). Next antardashas: ${up.map(a => PN(a.lord) + ' from ' + fd(a.start)).join(', ')}. Mahadasha sequence: ${c.dasha.mahas.map(m => PN(m.lord) + ' ' + m.start.getFullYear()).join(', ')}.`); }
-    const sn = satNow(); L.push('Sade Sati: ' + (sn.on ? `running, ${PHASE[sn.ph.rel][0]}, whole cycle ${fd(sn.cyc.start)} to ${fd(sn.cyc.end)}` : sn.dh ? `Dhaiya running to ${fd(sn.dh.to)}` : `not running${sn.next ? ', next from ' + fd(sn.next.start) : ''}`) + '.');
-    L.push('Yogas and doshas found: ' + R.yogas(c).map(y => `${y.name} [${y.kind}] (${y.why}${y.note ? ' ' + y.note : ''})`).join(' | '));
-    const d = R.daily(c, now); L.push(`Today: ${d.verdict[0]}; Moon in ${SN(d.mo.sign)}, ${d.fromMoon} from natal Moon, house ${d.house}; Tara ${D.TARA[d.tara][0]}.`);
-    const W = R.watch(c, st.sat, now, 10); L.push('Flagged periods (next 10 years): ' + W.hard.slice(0, 12).map(h => `${h.title} ${fd(h.from)} to ${fd(h.to)}`).join('; ') + '. Supportive: ' + W.soft.slice(0, 6).map(h => `${h.title} ${fd(h.from)} to ${fd(h.to)}`).join('; ') + '.');
-    const G = R.gemPlan(c, cd), gl = k => G.gems.filter(g => g.cat === k).map(g => D.GEM[g.p][0]).join(', ') || 'none'; L.push(`Gemstones by house-rulership rule: suit ${gl('yes')}; neutral ${gl('maybe')}; not advised ${gl('avoid')}.`);
-    L.push('Life-area strength (1-5): ' + R.lifeAreas(c, i.gender).map(a => `${a.title} ${a.stars}`).join('; ') + '.');
+    L.push('PLANETS: ' + J.P.map(k => `${PN(k)} ${SN(p[k].sign)} ${dms(p[k].deg)} house ${p[k].house} ${D.NAK[p[k].nak.index].name}-${p[k].nak.pada} ${p[k].dignity}${p[k].retro && k !== 'Ra' && k !== 'Ke' ? ' retrograde' : ''}${p[k].combust ? ' combust' : ''}${p[k].cusp ? ' ON SIGN BORDER (uncertain sign)' : ''}`).join('; '));
+    L.push('HOUSES: ' + c.houses.map(h => `H${h.num} (${D.HOUSES[h.num - 1].title}) ${SN(h.sign)}, lord ${PN(h.lord)} in H${p[h.lord].house}, holds ${h.planets.map(PN).join('+') || 'nothing'}, aspected by ${h.aspectedBy.filter(k => !h.planets.includes(k)).map(PN).join('+') || 'none'}, strength ${R.houseFactors(c, h.num).stars}/5`).join('; '));
+    if (cd) {
+      L.push(`DASHA NOW: ${PN(cd.m.lord)} mahadasha ${fd(cd.m.start)} to ${fd(cd.m.end)}; ${PN(cd.a.lord)} antardasha to ${fd(cd.a.end)}; ${PN(cd.p.lord)} pratyantar to ${fd(cd.p.end)}.`);
+      L.push('ANTARDASHAS IN THIS MAHADASHA: ' + J.subPeriods(cd.m).filter(a => a.end > now).map(a => { const s = R.antarScore(c, cd.m.lord, a.lord); return `${PN(a.lord)} ${fd(a.start)} to ${fd(a.end)} [${s.b >= 2 && s.b - s.g >= 0.5 ? 'flagged hard' : s.g >= 2.5 && s.b <= 1 ? 'supportive' : 'neutral'}]`; }).join('; '));
+      L.push('MAHADASHA SEQUENCE: ' + c.dasha.mahas.map(m => `${PN(m.lord)} ${m.start.getFullYear()}-${m.end.getFullYear()}`).join(', '));
+    }
+    const sn = satNow(); L.push('SADE SATI: ' + (sn.on ? `running, ${PHASE[sn.ph.rel][0]} to ${fd(sn.ph.to)}, whole cycle ${fd(sn.cyc.start)} to ${fd(sn.cyc.end)}` : sn.dh ? `Dhaiya running to ${fd(sn.dh.to)}` : `not running${sn.next ? ', next from ' + fd(sn.next.start) : ''}`) + '.');
+    L.push('YOGAS AND DOSHAS: ' + R.yogas(c).map(y => `${y.name} [${y.kind}] (${y.why}${y.note ? ' ' + y.note : ''})`).join(' | '));
+    const d = R.daily(c, now); L.push(`TODAY: ${d.verdict[0]}; Moon in ${SN(d.mo.sign)}, ${d.fromMoon} from natal Moon, house ${d.house}; Tara ${D.TARA[d.tara][0]}.`);
+    const W = R.watch(c, st.sat, now, 10);
+    L.push('FLAGGED PERIODS (10 years): ' + W.hard.slice(0, 14).map(h => `${h.title} ${fd(h.from)} to ${fd(h.to)} [${['', 'mild', 'moderate', 'high'][h.sev]}]`).join('; '));
+    L.push('SUPPORTIVE PERIODS: ' + W.soft.slice(0, 8).map(h => `${h.title} ${fd(h.from)} to ${fd(h.to)}`).join('; '));
+    L.push('UPCOMING CHANGES: ' + W.trans.slice(0, 12).map(t => `${fd(t.date)} ${R.transitionText(c, t).title}`).join('; '));
+    const G = R.gemPlan(c, cd), gl = k => G.gems.filter(g => g.cat === k).map(g => D.GEM[g.p][0]).join(', ') || 'none'; L.push(`GEMSTONES (house-rulership rule): suit ${gl('yes')}; neutral ${gl('maybe')}; not advised ${gl('avoid')}.`);
+    L.push('SIMPLE REMEDIES AVAILABLE: ' + R.remedyPlan(c, st.sat, cd).map(x => `${PN(x.p)}: ${D.REMEDY[x.p].tr} on ${D.REMEDY[x.p].day}; ${D.REMEDY[x.p].practice} Give: ${D.REMEDY[x.p].give}`).join(' | '));
     return L.join('\n');
   }
-  const GURU_RULES = lang => `You are AstroGuru, a Vedic astrology guide inside the Jyotish Darpan app. Answer the person's questions using ONLY the chart data below, which the app has already calculated; never recalculate positions or invent placements, dates or yogas that are not in the data. If the data does not cover a question, say so and say what would be needed.
-Style: warm, plain language, no jargon without a short explanation. Keep answers under 180 words unless asked for more. Name the chart factor behind each statement (for example "because Jupiter rules your 5th house"). Reply in ${lang}.
-Honesty: astrology is a traditional interpretive system, not a tested science. Describe tendencies, never certainties. Do not predict death, serious illness, accidents, divorce or disaster, and do not frighten. Do not give medical, legal or financial instructions; suggest a qualified professional for those. Do not tell anyone to accept or reject a marriage or a person. Remedies must be simple and free or cheap (mantra, giving, conduct); never push gemstones or paid rituals, and mention that a planet flagged ON SIGN BORDER has an uncertain sign.
+  const GURU_RULES = (lang, depth) => `You are AstroGuru, a Vedic astrology guide inside the Jyotish Darpan app. The app has already calculated this person's chart; the CHART DATA below is your only source. Never recalculate, and never invent a placement, date, yoga or period that is not in the data. If the data cannot answer the question, say so in ANSWER and say what is missing.
+
+HOW TO ANSWER
+1. Answer the exact question asked, in the first sentence. No greeting, no restating the question, no general astrology lesson, no disclaimer (the app already shows one).
+2. Pick only the two or three chart factors that matter most for THIS question. Leave out everything else, even if true.
+3. Give real dates from the data whenever timing is asked or implied.
+4. End with something the person can do.
+5. If the question is too vague to answer well, give your best short answer and put the clarifying questions under NEXT.
+
+OUTPUT FORMAT. Use exactly these English labels at the start of a line, in this order, and nothing before ANSWER. Write the content in ${lang}.
+ANSWER: one or two plain sentences giving the verdict. For yes/no questions start with "Likely yes", "Mixed" or "Unlikely by the chart".
+WHY:
+- chart factor — what it means for this question (${depth === 'detailed' ? 'three or four' : 'two or three'} bullets, each under ${depth === 'detailed' ? 40 : 24} words; the part before the dash names the factor, for example "Jupiter rules your 5th house")
+WHEN:
+- date range — what to expect (one to ${depth === 'detailed' ? 'four' : 'three'} bullets; omit the whole section if timing is irrelevant)
+DO:
+- one concrete, free or cheap action (one or two bullets)
+SIGNAL: strong, mixed or weak, then a dash and up to ten words on how far the chart factors agree
+NEXT:
+- a short follow-up question the person might ask (two or three bullets)
+Total length under ${depth === 'detailed' ? 260 : 130} words.
+
+LIMITS: astrology describes tendencies, not certainties; phrase it that way. Do not predict death, serious illness, accidents, divorce or disaster, and do not frighten. No medical, legal or financial instructions; point to a qualified professional instead. Never tell anyone to accept or reject a marriage or a person. Do not push gemstones or paid rituals. A planet marked ON SIGN BORDER has an uncertain sign: say so if you rely on it.
 CHART DATA
 `;
-  const gfmt = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+  const ginl = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  function gRender(text) {
+    const m = text.match(/(^|\n)\s*ANSWER:/); if (!m) return ginl(text).replace(/\n/g, '<br>');
+    const sec = {}, re = /(?:^|\n)\s*(ANSWER|WHY|WHEN|DO|SIGNAL|NEXT):/g, hits = []; let x;
+    while ((x = re.exec(text))) hits.push({ k: x[1], s: x.index, e: re.lastIndex });
+    hits.forEach((h, i) => sec[h.k] = text.slice(h.e, i + 1 < hits.length ? hits[i + 1].s : text.length).trim());
+    const items = s => (s || '').split('\n').map(l => l.replace(/^\s*[-•*]\s*/, '').trim()).filter(Boolean);
+    const pair = l => { const k = l.search(/\s[—–-]\s/); return k > 0 ? `<b>${ginl(l.slice(0, k))}</b><span>${ginl(l.slice(k + 3))}</span>` : `<span>${ginl(l)}</span>`; };
+    let h = `<p class="ganswer">${ginl(sec.ANSWER || '')}</p>`;
+    if (sec.WHY) h += `<div class="gsec"><h4>Why the chart says so</h4><ul class="gwhy">${items(sec.WHY).map(l => `<li>${pair(l)}</li>`).join('')}</ul></div>`;
+    if (sec.WHEN) h += `<div class="gsec"><h4>When</h4><ul class="gwhen">${items(sec.WHEN).map(l => `<li>${pair(l)}</li>`).join('')}</ul></div>`;
+    if (sec.DO) h += `<div class="gsec"><h4>What to do</h4><ul class="gdo">${items(sec.DO).map(l => `<li>${ginl(l)}</li>`).join('')}</ul></div>`;
+    if (sec.SIGNAL) { const w = (sec.SIGNAL.match(/strong|mixed|weak/i) || ['mixed'])[0].toLowerCase(), rest = sec.SIGNAL.replace(/^\s*(strong|mixed|weak)\s*[—–,:-]?\s*/i, ''); h += `<p class="gsig">${pill('Chart signal: ' + w, w === 'strong' ? 'good' : w === 'weak' ? 'bad' : 'warn')} <span class="hint">${ginl(rest)}</span></p>`; }
+    return h;
+  }
+  const gNext = text => { const m = text.match(/(?:^|\n)\s*NEXT:([\s\S]*)$/); return m ? m[1].split('\n').map(l => l.replace(/^\s*[-•*]\s*/, '').trim()).filter(l => l.length > 3).slice(0, 3) : []; };
   async function guruSend(q) {
     if (GURU.busy || !GURU.api || !q.trim()) return; GURU.busy = true; GURU.started = true; GURU.msgs.push({ role: 'user', content: q.trim() }); render();
-    const hist = GURU.msgs.slice(-12).map(m => ({ role: m.role, content: m.content })); while (hist.length && hist[0].role !== 'user') hist.shift();
-    hist[0] = { role: 'user', content: GURU_RULES(window.JD_I18N.full[lang]) + guruContext() + '\n\nQUESTION\n' + hist[0].content };
+    const hist = GURU.msgs.slice(-10).map(m => ({ role: m.role, content: m.content })); while (hist.length && hist[0].role !== 'user') hist.shift();
+    hist[0] = { role: 'user', content: GURU_RULES(window.JD_I18N.full[lang], GURU.depth) + guruContext() + '\n\nQUESTION\n' + hist[0].content };
+    if (hist.length > 1) hist[hist.length - 1].content += '\n\n(Answer this question only, in the required format, using the chart data above.)';
     try {
-      const r = await GURU.api(hist, { cache: false, onText: ({ text }) => { const el = $('#gstream'); if (el) { el.innerHTML = gfmt(text); el.scrollIntoView({ block: 'nearest' }); } } });
-      GURU.msgs.push({ role: 'assistant', content: r.text + (r.truncated ? ' …' : '') });
+      const r = await GURU.api(hist, { cache: false, onText: ({ text }) => { const el = $('#gstream'); if (el) { el.innerHTML = gRender(text); const b = $('#gthread'); b.scrollTop = b.scrollHeight; } } });
+      GURU.msgs.push({ role: 'assistant', content: r.text });
     } catch (e) {
       const code = e && e.code; GURU.msgs.pop();
-      GURU.err = code === 'not_granted' ? 'Claude did not get permission to answer. Press Start again and approve the prompt to use AstroGuru.' : code === 'rate_limited' ? 'Claude is busy or your usage limit is reached. Wait a minute and ask again.' : 'Claude could not answer just now. Try again in a moment.'; if (code === 'not_granted') GURU.started = false;
+      GURU.err = code === 'not_granted' ? 'Claude did not get permission to answer. Ask again and approve the prompt to use AstroGuru.' : code === 'rate_limited' ? 'Claude is busy or your usage limit is reached. Wait a minute and ask again.' : 'Claude could not answer just now. Try again in a moment.';
     }
     GURU.busy = false; render(); const box = $('#gthread'); if (box) box.scrollTop = box.scrollHeight;
   }
+  function guruStarters() {
+    const cd = currentDasha(), sn = satNow(), out = [];
+    if (cd) out.push(`What does my ${PN(cd.m.lord)}–${PN(cd.a.lord)} period mean for my work?`);
+    out.push(sn.on ? 'How should I handle Sade Sati over the next two years?' : 'What is the best period ahead for me, and for what?');
+    out.push('What are my two biggest strengths and how do I use them?', 'When is a good time for a big career move?', 'Which one remedy should I start with, and why?');
+    return out;
+  }
   function vGuru() {
     const A = window.JD_AUTHOR || {}, err = GURU.err ? `<p class="err">${GURU.err}</p>` : ''; GURU.err = '';
-    const head = `<p class="lead">AstroGuru is Claude, given the chart this app has calculated. Ask it anything about the chart in your own words: what a period means, why something is flagged, what to focus on this year.</p>`;
-    if (GURU.api === null) return head + `<section class="card prose"><h2>AstroGuru runs inside Claude</h2><p>The assistant needs a Claude sign-in, and Claude only allows that on pages it hosts. This copy of the app is a plain website, so the chat is not available here. Everything else works as usual.</p><p>${A.claudeUrl ? `Open the Claude-hosted version, sign in with your Claude account, and the AstroGuru tab will be live: <a href="${esc(A.claudeUrl)}" target="_blank" rel="noopener">open Jyotish Darpan in Claude</a>.` : 'Open the Claude-hosted version of Jyotish Darpan and sign in with your Claude account to use it.'}</p><p class="hint">No API key is stored in this app, and your birth details are never sent anywhere from this website.</p></section>`;
+    const head = `<p class="lead">AstroGuru is Claude, given the chart this app has calculated. Ask one specific question at a time and it answers in a fixed shape: the answer, why the chart says so, when, and what to do.</p>`;
+    if (GURU.api === null) return head + `<section class="card prose"><h2>AstroGuru runs inside Claude</h2><p>The assistant needs a Claude sign-in, and Claude only allows that on pages it hosts. This copy of the app is a plain website, so the chat is not available here. Everything else works as usual.</p><p>${A.claudeUrl ? `Open the Claude-hosted version in any browser, sign in with your Claude account, and the AstroGuru tab will be live: <a href="${esc(A.claudeUrl)}" target="_blank" rel="noopener">open Jyotish Darpan in Claude</a>.` : 'Open the Claude-hosted version of Jyotish Darpan and sign in with your Claude account to use it.'}</p><p class="hint">No API key is stored in this app, and your birth details are never sent anywhere from this website.</p></section>`;
     if (GURU.api === undefined) return head + '<section class="card"><p>Connecting to Claude…</p></section>';
-    if (!GURU.started) return head + `<section class="card now prose"><h2>Sign in with Claude</h2><p>AstroGuru answers through your own Claude account. You are already signed in to Claude to see this page; when you press Start, Claude asks once for permission to answer on this page.</p><p>Each question sends the calculated chart (birth details, positions, periods and the app's findings) to Claude so it can answer. Nothing is sent before you press Start.</p>${err}<p><button class="btn primary big" id="gstart" type="button">Start AstroGuru</button></p></section>`;
-    const sug = ['What should I focus on this year?', 'Explain my current dasha simply', 'What are my biggest strengths?', 'Why is the next period flagged?', 'What simple remedy suits me most?'];
-    return head + `<section class="card guru"><div id="gthread" class="gthread">${GURU.msgs.map(m => `<div class="bubble ${m.role}">${gfmt(m.content)}</div>`).join('')}${GURU.busy ? '<div class="bubble assistant" id="gstream">Thinking…</div>' : ''}</div>${err}
-      <div class="chips">${sug.map(x => `<button class="chip" data-gq="${esc(x)}" type="button">${x}</button>`).join('')}</div>
-      <form id="gform" class="gform"><label class="vh" for="gq">Your question</label><textarea id="gq" rows="2" placeholder="Ask about your chart" ${GURU.busy ? 'disabled' : ''}></textarea><button class="btn primary" type="submit" ${GURU.busy ? 'disabled' : ''}>Send</button></form>
-      <p class="hint">Answers come from Claude reading this chart's data. They are interpretations, not predictions, and not medical, legal or financial advice. <button class="btn sm" id="gclear" type="button">Clear chat</button></p></section>`;
+    if (!GURU.started) return head + `<section class="card now prose"><h2>Sign in with Claude</h2><p>AstroGuru answers through your own Claude account. You are already signed in to Claude to see this page; the first time you ask, Claude asks once for permission to answer here.</p><p>Each question sends the calculated chart (birth details, positions, periods and the app's findings) to Claude so it can answer. Nothing is sent before you ask.</p>${err}<p><button class="btn primary big" id="gstart" type="button">Start AstroGuru</button></p></section>`;
+    const last = GURU.msgs.length && GURU.msgs[GURU.msgs.length - 1].role === 'assistant' ? gNext(GURU.msgs[GURU.msgs.length - 1].content) : [], sug = last.length ? last : guruStarters();
+    const topics = [['Career', 'What does my chart say about my career over the next two years?'], ['Money', 'How do my finances look over the next two years, and what should I watch?'], ['Relationships', 'What does my chart say about my marriage or partnership right now?'], ['Wellbeing', 'Which habits would support my energy and peace of mind in this period?'], ['This year', 'What are the three most important things for me in the next twelve months?'], ['Remedies', 'Which one remedy should I start with, and why?']];
+    return head + `<section class="card guru">
+      <div class="gbar"><div class="chips">${topics.map(t => `<button class="chip" data-gq="${esc(t[1])}" type="button" ${GURU.busy ? 'disabled' : ''}>${t[0]}</button>`).join('')}</div><div class="seg" role="group" aria-label="Answer length"><button data-gdepth="brief" class="${GURU.depth === 'brief' ? 'on' : ''}">Brief</button><button data-gdepth="detailed" class="${GURU.depth === 'detailed' ? 'on' : ''}">Detailed</button></div></div>
+      <div id="gthread" class="gthread">${GURU.msgs.length ? '' : `<div class="bubble assistant"><p class="ganswer">Ask me one specific question about this chart.</p><p class="hint">Specific questions get specific answers: "When is a good time to change jobs?" works better than "Tell me about my career".</p></div>`}${GURU.msgs.map(m => `<div class="bubble ${m.role}">${m.role === 'user' ? ginl(m.content) : gRender(m.content)}</div>`).join('')}${GURU.busy ? '<div class="bubble assistant" id="gstream"><span class="hint">Reading the chart…</span></div>' : ''}</div>${err}
+      <p class="k">${last.length ? 'Ask next' : 'Try asking'}</p><div class="chips">${sug.map(x => `<button class="chip" data-gq="${esc(x)}" type="button" ${GURU.busy ? 'disabled' : ''}>${esc(x)}</button>`).join('')}</div>
+      <form id="gform" class="gform"><label class="vh" for="gq">Your question</label><textarea id="gq" rows="2" placeholder="Ask one specific question about your chart" ${GURU.busy ? 'disabled' : ''}></textarea><button class="btn primary" type="submit" ${GURU.busy ? 'disabled' : ''}>Send</button></form>
+      <p class="hint">Answers are Claude's reading of this chart's data: interpretations, not predictions, and not medical, legal or financial advice. "Chart signal" says how far the chart factors agree, not how likely an outcome is. <button class="btn sm" id="gclear" type="button">Clear chat</button></p></section>`;
+  }
+
+  /* ================= Good and bad times of the day ================= */
+  function myCity() {
+    const s = store.get('jd.city', null); if (s && s.tz) return s;
+    let tz = 'Asia/Kolkata'; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) { }
+    if (tz === 'Asia/Calcutta') tz = 'Asia/Kolkata';
+    return (tz === 'Asia/Kolkata' && D.CITIES.find(c => c.name === 'New Delhi')) || D.CITIES.find(c => c.tz === tz) || D.CITIES.find(c => c.name === 'New Delhi');
+  }
+  function dayTimes(city, when) {
+    const f = new Intl.DateTimeFormat('en-CA', { timeZone: city.tz, year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short' }), o = {}; f.formatToParts(when).forEach(x => o[x.type] = x.value);
+    const mid = J.localToUtc(+o.year, +o.month, +o.day, 0, 0, city.tz).date, obs = new Astronomy.Observer(city.lat, city.lon, 0);
+    const sr = Astronomy.SearchRiseSet('Sun', obs, +1, mid, 1), ss = sr && Astronomy.SearchRiseSet('Sun', obs, -1, sr.date, 1); if (!sr || !ss) return null;
+    const a = sr.date.getTime(), b = ss.date.getTime(), len = b - a, wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(o.weekday), seg = i => [a + (i - 1) * len / 8, a + i * len / 8];
+    const R8 = [8, 2, 7, 5, 6, 4, 3], Y8 = [5, 4, 3, 2, 1, 7, 6], G8 = [7, 6, 5, 4, 3, 2, 1], mk = (name, good, r, note) => ({ name, good, from: new Date(r[0]), to: new Date(r[1]), note });
+    const items = [mk('Brahma Muhurta', true, [a - 96 * 60000, a - 48 * 60000], 'Before dawn. Best for prayer, meditation and study.'), mk('Abhijit Muhurta', wd !== 3, [a + len * 7 / 15, a + len * 8 / 15], wd === 3 ? 'The midday window. Tradition does not use it on Wednesdays.' : 'The midday window. Good for starting almost anything.'),
+    mk('Rahu Kaal', false, seg(R8[wd]), 'Avoid starting new work, journeys, purchases or agreements. Routine work is fine.'), mk('Yamaganda', false, seg(Y8[wd]), 'Avoid beginning important or risky undertakings.'), mk('Gulika Kaal', false, seg(G8[wd]), 'Avoid starts you would not want repeated. Some traditions treat it as neutral.')];
+    return { sr: sr.date, ss: ss.date, wd, items };
+  }
+  function timesHTML(when, heading) {
+    const city = myCity(), T = dayTimes(city, when || new Date()), tf = d => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: city.tz });
+    const pick = `<span class="citypick"><label class="vh" for="mcity">City</label><input id="mcity" list="citylist2" value="${esc(city.name + ', ' + city.region)}" aria-label="City for sunrise times" data-noi18n><datalist id="citylist2">${D.CITIES.map(x => `<option value="${esc(x.name + ', ' + x.region)}">`).join('')}</datalist></span>`;
+    if (!T) return `<section class="card"><h2>${heading}</h2>${pick}<p>The Sun does not rise and set normally at this place today.</p></section>`;
+    const now = Date.now(), a = T.sr.getTime() - 100 * 60000, b = T.ss.getTime() + 20 * 60000, pc = t => ((t - a) / (b - a) * 100).toFixed(2), cur = T.items.find(i => now >= i.from && now < i.to), nxt = T.items.filter(i => i.from > now).sort((x, y) => x.from - y.from)[0];
+    const isToday = !when || Math.abs(when - now) < 60000;
+    return `<section class="card times"><div class="thead"><div><h2>${heading}</h2><p class="hint">${D.VARA[T.wd][0]} · sunrise ${tf(T.sr)} · sunset ${tf(T.ss)} · times for</p></div>${pick}</div>
+      ${isToday ? `<p class="tnow">${cur ? `${pill(cur.good ? 'Good time now' : 'Avoid new starts now', cur.good ? 'good' : 'bad')} <b>${cur.name}</b> until ${tf(cur.to)}.` : `${pill('Ordinary time now')} No special window is running.`}${nxt ? ` Next: <b>${nxt.name}</b> at ${tf(nxt.from)}.` : ''}</p>` : ''}
+      <div class="tbar">${T.items.map(i => `<span class="${i.good ? 'tg' : 'tb'}" style="left:${pc(i.from)}%;width:${(pc(i.to) - pc(i.from)).toFixed(2)}%" title="${i.name} ${tf(i.from)} – ${tf(i.to)}"></span>`).join('')}<span class="tsun" style="left:${pc(T.sr)}%"><i>sunrise</i></span><span class="tsun" style="left:${pc(T.ss)}%"><i>sunset</i></span>${isToday && now > a && now < b ? `<span class="nowmark" style="left:${pc(now)}%"><i>now</i></span>` : ''}</div>
+      <div class="tgrid"><div><h4>Good times</h4>${T.items.filter(i => i.good).map(i => `<div class="trow slim"><b class="num">${tf(i.from)} – ${tf(i.to)}</b> ${pill(i.name, 'good')}<br><span class="hint">${i.note}</span></div>`).join('')}</div><div><h4>Times to avoid for new starts</h4>${T.items.filter(i => !i.good).map(i => `<div class="trow slim"><b class="num">${tf(i.from)} – ${tf(i.to)}</b> ${pill(i.name, i.name === 'Abhijit Muhurta' ? '' : 'bad')}<br><span class="hint">${i.note}</span></div>`).join('')}</div></div>
+      <p class="hint">These windows divide the daylight at the chosen city into eight parts by the weekday rule used in Indian almanacs. They apply to everyone in that place and are the same for all charts.</p></section>`;
+  }
+  function paintTimes() { const el = $('#daytimes'); if (el && !$('#home').hidden) el.innerHTML = timesHTML(null, 'Good and bad times today'); }
+
+  /* ================= Kundali report (print / PDF) ================= */
+  const REP = { css: null, dl: undefined };
+  function reportHTML() {
+    const c = st.chart, i = st.input, p = c.planets, A = window.JD_AUTHOR || {}, now = new Date(), nm = esc(i.name || 'Kundali'), pg = c.panchang, nk = D.NAK[p.Mo.nak.index], P = R.portrait(c, i.gender), cd = currentDasha();
+    const keepAsp = st.aspP, keepSel = st.selHouse; st.aspP = null; st.selHouse = 0;
+    let n = 0; const sheet = (title, dev, body) => `<section class="ksheet"><header class="khead"><span class="kno">${String(++n).padStart(2, '0')}</span><div><h2>${title}</h2><p data-noi18n>${dev}</p></div></header><div class="kbody">${body}</div><footer class="kfoot"><span data-noi18n>Jyotish Darpan · ${nm}</span><span>${title}</span></footer></section>`;
+    const tbl = (heads, rows, cls) => `<table class="kt ${cls || ''}">${heads ? `<thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead>` : ''}<tbody>${rows.map(r => `<tr${r.cur ? ' class="cur"' : ''}>${(r.cells || r).map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    const kv = rows => `<table class="kt kkv"><tbody>${rows.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('')}</tbody></table>`;
+    const box = (t, h, cls) => `<div class="kbox ${cls || ''}"><h3>${t}</h3>${h}</div>`;
+    const tithiName = pg.tithi % 15 === 14 ? (pg.paksha ? 'Amavasya' : 'Purnima') : D.TITHI[pg.tithi % 15], off = `${c.offsetMin >= 0 ? '+' : '−'}${String(Math.floor(Math.abs(c.offsetMin) / 60)).padStart(2, '0')}:${String(Math.round(Math.abs(c.offsetMin) % 60)).padStart(2, '0')}`;
+    const dateStr = new Date(Date.UTC(i.y, i.m - 1, i.d)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), timeStr = `${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')}`;
+    const cusp = J.P.filter(k => p[k].cusp && k !== 'Ke').map(k => `<p class="knote"><b>${PN(k)} is on a sign border</b>, ${Math.max(1, Math.round(p[k].cusp.arcsec))} arc-seconds from the line between ${SN(p[k].sign)} and ${SN(p[k].cusp.other)}. This report reads it in ${SN(p[k].sign)}; other software may place it in ${SN(p[k].cusp.other)}.</p>`).join('');
+
+    let h = `<section class="ksheet rcover"><div class="rc-top"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="3" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 3L37 37M37 3L3 37M20 3L3 20L20 37L37 20Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="20" cy="11.5" r="2.4" fill="currentColor"/></svg><span data-noi18n>Jyotish Darpan · ज्योतिष दर्पण</span></div>
+      <p class="rc-k" data-noi18n>जन्म कुंडली · Janma Kundali</p><h1>${nm}</h1><p class="rc-b">${dateStr} · ${timeStr} · ${esc(i.place || '')}</p>
+      <div class="rc-grid"><div class="rc-chart">${kundali('d1', false)}</div><div class="rc-facts"><div><small>Lagna</small><b>${SN(c.asc.sign)}</b><span>${D.SIGNS[c.asc.sign].sa} · ${dms(c.asc.deg)}</span></div><div><small>Moon sign</small><b>${SN(p.Mo.sign)}</b><span>${D.SIGNS[p.Mo.sign].sa} · ${dms(p.Mo.deg)}</span></div><div><small>Birth star</small><b>${nk.name}</b><span>Pada ${p.Mo.nak.pada}</span></div>${cd ? `<div><small>Current dasha</small><b>${PN(cd.m.lord)} – ${PN(cd.a.lord)}</b><span>until ${fd(cd.a.end)}</span></div>` : ''}</div></div>
+      <p class="rc-f">Prepared ${fd(now)}${A.name ? ` · © ${now.getFullYear()} ${esc(A.name)}` : ''}</p></section>`;
+
+    // 1 Birth particulars
+    h += sheet('Birth particulars', 'जन्म विवरण', `<div class="k2">${box('Birth details', kv([['Name', nm], ['Date of birth', dateStr], ['Time of birth', timeStr + ' local time'], ['Place of birth', esc(i.place || '—')], ['Latitude, longitude', `${(+i.lat).toFixed(4)}°, ${(+i.lon).toFixed(4)}°`], ['Time zone', 'UTC ' + off], ['Birth in UTC', c.date.toISOString().slice(0, 16).replace('T', ' ')], ['Sunrise · sunset', pg.sunrise ? localT(pg.sunrise) + ' · ' + localT(pg.sunset) : '—'], ['Ayanamsa', `${dms(c.ayanamsa)} (${{ lahiri: 'Lahiri', raman: 'Raman', kp: 'KP' }[c.ayanamsaSys]})`]]))}
+      ${box('Panchang at birth', kv([['Weekday', `${D.VARA[pg.weekday][0]} (${D.VARA[pg.weekday][1]})`], ['Tithi', `${pg.paksha ? 'Krishna' : 'Shukla'} ${tithiName}`], ['Nakshatra', `${nk.name}, pada ${p.Mo.nak.pada}`], ['Yoga', D.YOGA27[pg.yoga]], ['Karana', D.KARANA[pg.karana]]]) + `<h3>Key points of the chart</h3>` + kv([['Lagna', `${SN(c.asc.sign)} ${dms(c.asc.deg)}, lord ${PN(c.houses[0].lord)}`], ['Moon sign', `${SN(p.Mo.sign)}, lord ${PN(J.SIGN_LORD[p.Mo.sign])}`], ['Sun sign', SN(p.Su.sign)], ['Star lord', PN(p.Mo.nak.lord)], ['Gana', P.gana], ['Yoni', P.star.yoni], ['Nadi', P.nadi], ['Dasha at birth', `${PN(c.dasha.startLord)}, ${c.dasha.balanceYears.toFixed(2)} years left`]]))}</div>${cusp}
+      <div class="k2">${box('Your nature', `<p>${D.LAGNA[c.asc.sign]}</p>`)}${box('Your mind', `<p>${D.MOONSIGN[p.Mo.sign]} Your birth star ${nk.name} adds a nature that is ${nk.trait}.</p>`)}</div>`);
+
+    // 2 Charts
+    h += sheet('Charts', 'कुंडली चक्र', `<div class="kcharts">${[['d1', 'Lagna chart (D1)', 'The main chart'], ['moon', 'Moon chart', 'Counted from the Moon sign'], ['d9', 'Navamsa (D9)', 'Inner strength and marriage'], ['d10', 'Dasamsa (D10)', 'Career']].map(x => `<figure>${kundali(x[0], false)}<figcaption><b>${x[1]}</b><span>${x[2]}</span></figcaption></figure>`).join('')}</div>
+      <p class="kcap">${st.style === 'north' ? 'North Indian style: the top diamond is the first house and houses run anticlockwise. Numbers are signs (1 Aries to 12 Pisces).' : 'South Indian style: signs stay fixed, the Lagna box is marked, and houses run clockwise from it.'} Su Sun · Mo Moon · Ma Mars · Me Mercury · Ju Jupiter · Ve Venus · Sa Saturn · Ra Rahu · Ke Ketu · ᴿ retrograde.</p>`);
+
+    // 3 Planets
+    h += sheet('Planetary positions', 'ग्रह स्पष्ट', tbl(['Planet', 'Sign', 'Degree', 'House', 'Nakshatra · pada', 'Navamsa', 'State'], [['<b>Lagna</b>', SN(c.asc.sign), dms(c.asc.deg), '1', `${D.NAK[c.asc.nak.index].name} · ${c.asc.nak.pada}`, SN(c.asc.nav), '']].concat(J.P.map(k => [pl(k), SN(p[k].sign), `<span class="num">${dms(p[k].deg)}</span>`, p[k].house, `${D.NAK[p[k].nak.index].name} · ${p[k].nak.pada}`, SN(p[k].nav), statePills(k)])))
+      + `<h3 class="ksub">What each placement gives</h3><div class="kcols">${J.P.map(k => `<p class="kitem"><b class="pl-${k}">${D.PLANETS[k].glyph} ${PN(k)}</b> in the ${ord(p[k].house)} house, ${SN(p[k].sign)}. ${D.PIH[k][p[k].house - 1]}</p>`).join('')}</div>`);
+
+    // 4 Houses
+    const LA = R.lifeAreas(c, i.gender), byH = {}; LA.forEach(a => byH[a.house] = a);
+    h += sheet('The twelve houses', 'द्वादश भाव', tbl(['House', 'Governs', 'Sign', 'Lord and its place', 'Planets inside', 'Aspected by', 'Strength'], c.houses.map(x => [`<b>${x.num}</b>`, D.HOUSES[x.num - 1].title, SN(x.sign), `${PN(x.lord)} in the ${ord(p[x.lord].house)}`, x.planets.map(PN).join(', ') || '—', x.aspectedBy.filter(k => !x.planets.includes(k)).map(PN).join(', ') || '—', stars(byH[x.num].stars)]))
+      + `<h3 class="ksub">House by house</h3><div class="kcols">${LA.slice().sort((a, b) => a.house - b.house).map(a => `<p class="kitem"><b>${ord(a.house)} · ${a.title}.</b> ${a.paras[0]}</p>`).join('')}</div>`);
+
+    // 5 Character
+    const ch = R.character(c, i.gender), fg = R.figure(c);
+    h += sheet('Character sketch', 'स्वभाव चित्रण', `<div class="kchar"><div class="kfig">${fg.svg}<p>${fg.height}, ${fg.build} build, ${fg.face} face</p><p class="kcap">The build tradition describes. An illustration, not a likeness.</p>${kv([['Gana', P.gana], ['Element', D.SIGNS[c.asc.sign].element], ['Yoni', P.star.yoni]])}</div><div class="kcols two">${ch.map(s => `<div class="kitem"><h4>${s[0]}</h4>${s[1].map(x => `<p>${x}</p>`).join('')}</div>`).join('')}</div></div>
+      <div class="k3">${box('Friends', `<p>${P.friends[0]}</p>`)}${box('Interests', `<p>${P.interests.map(x => x.text).join('; ')}.</p>`)}${box('Advice', `<p>${P.advice[0]}</p>`)}</div>`);
+
+    // 6 Yogas
+    const Y = R.yogas(c), yl = k => Y.filter(y => y.kind === k).map(y => `<div class="kitem ky ${y.kind}"><h4>${y.name}</h4><p>${y.meaning}</p><p class="kwhy">${y.why}${y.note ? ' ' + y.note : ''}</p></div>`).join('');
+    h += sheet('Yogas and doshas', 'योग एवं दोष', `<div class="k2"><div><h3 class="ksub good">Strengths</h3>${yl('good') || '<p>None from the checked list.</p>'}</div><div><h3 class="ksub warn">Mixed and to work with</h3>${yl('mixed') + yl('caution') || '<p>None from the checked list.</p>'}</div></div>`);
+
+    // 7 Dasha
+    const ms = c.dasha.mahas;
+    h += sheet('Vimshottari dasha', 'विंशोत्तरी दशा', `<div class="k2">${box('Major periods', tbl(['Planet', 'From', 'To', 'Age'], ms.map(m => ({ cur: now >= m.start && now < m.end, cells: [pl(m.lord), fd(m.start), fd(m.end), `${Math.max(0, age(m.start, c))}–${age(m.end, c)}`] }))))}${cd ? box(`Now: ${PN(cd.m.lord)} – ${PN(cd.a.lord)} – ${PN(cd.p.lord)}`, R.dashaReading(c, cd.m.lord).slice(0, 3).map(x => `<p>${x}</p>`).join('') + `<p><b>${PN(cd.a.lord)} sub-period, to ${fd(cd.a.end)}:</b> ${R.antarNote(c, cd.m.lord, cd.a.lord)}</p>`) : ''}</div>
+      <h3 class="ksub">Sub-periods of every major period</h3><div class="kdg">${ms.map(m => `<div class="kd ${now >= m.start && now < m.end ? 'cur' : ''}"><h4>${pl(m.lord)} <small>${m.start.getFullYear()}–${m.end.getFullYear()}</small></h4>${tbl(null, J.subPeriods(m).map(a => ({ cur: now >= a.start && now < a.end, cells: [PN(a.lord), fd(a.start), fd(a.end)] })))}</div>`).join('')}</div>`);
+
+    // 8 Saturn and watch periods
+    const S = st.sat, W = R.watch(c, S, now, 10), SV = ['', 'Mild', 'Moderate', 'High'], svc = ['', '', 'warn', 'bad'];
+    h += sheet('Saturn and periods to watch', 'साढ़े साती एवं सावधानी के समय', `<div class="k2">${box('Sade Sati across life', tbl(['Cycle', 'Phase', 'Saturn in', 'From', 'To'], [].concat(...S.cycles.map((cy, ci) => cy.parts.map(x => ({ cur: now >= x.from && now < x.to, cells: [ord(ci + 1), PHASE[x.rel][0], SN(x.sign), fd(x.from), fd(x.to)] }))))))}${box('Dhaiya', tbl(['Type', 'Saturn in', 'From', 'To'], S.dhaiya.map(d => ({ cur: now >= d.from && now < d.to, cells: [d.rel === 4 ? '4th from Moon' : '8th from Moon', SN(d.sign), fd(d.from), fd(d.to)] }))) + '<p class="kcap">Sade Sati is a period of pressure and maturing, not a sentence of bad luck. It rewards discipline, honesty and patience.</p>')}</div>
+      <h3 class="ksub">Flagged periods, next ten years</h3>${tbl(['From', 'To', 'Period', 'Level', 'What it can bring', 'What helps'], W.hard.map(x => ({ cur: now >= x.from && now < x.to, cells: [fd(x.from), fd(x.to), `<b>${x.title}</b>`, pill(SV[x.sev], svc[x.sev]), x.ill, x.cope] })), 'ksm')}
+      <h3 class="ksub good">Supportive periods</h3>${tbl(['From', 'To', 'Period', 'Why it helps'], W.soft.map(x => ({ cur: now >= x.from && now < x.to, cells: [fd(x.from), fd(x.to), `<b>${x.title}</b>`, x.why] })), 'ksm')}`);
+
+    // 9 Transitions
+    h += sheet('Changes ahead', 'आगामी परिवर्तन', `<p class="kcap">Changes of dasha and of the slow planets' signs over the next five years. The weeks around a change are when life feels most unsettled.</p>` + tbl(['Date', 'Change', 'What shifts', 'Possible strain', 'What helps'], W.trans.map(t => { const x = R.transitionText(c, t); return [`<span class="num">${fd(t.date)}</span>`, `<b>${x.title}</b>`, x.text, x.ill, x.cope]; }), 'ksm'));
+
+    // 10 Remedies
+    const plan = R.remedyPlan(c, S, cd), rest = J.P.filter(k => !plan.some(x => x.p === k));
+    h += sheet('Remedies', 'उपाय', `<p class="kcap">Simple practices needing no priest or expense. Do one or two steadily. Giving and conduct count for more than recitation.</p><div class="k2">${plan.map(x => { const r = D.REMEDY[x.p]; return `<div class="kbox krem"><h3 class="pl-${x.p}">${D.PLANETS[x.p].glyph} ${PN(x.p)} <small>${r.day}</small></h3><p class="kwhy">Because it ${R.list(x.why)}.</p><p class="kmantra"><span lang="sa" data-noi18n>${r.dev}</span><small>${r.tr} · ${r.when}</small></p>${kv([['Practice', r.practice], ['Give', r.give], ['Conduct', r.conduct]])}<p class="kwhy">Sources: ${r.src}</p></div>`; }).join('')}</div>
+      ${rest.length ? `<h3 class="ksub">The other planets</h3>` + tbl(['Planet', 'Day', 'Mantra', 'Practice', 'Give'], rest.map(k => { const r = D.REMEDY[k]; return [pl(k), r.day, `<span lang="sa" data-noi18n>${r.dev}</span><br><small>${r.tr}</small>`, r.practice, r.give]; }), 'ksm') : ''}
+      <h3 class="ksub">For peace in any period</h3><div class="k2">${D.SHANTI.map(s => `<p class="kitem"><b lang="sa" data-noi18n>${s[0]}</b> <small>${s[1]} · ${s[2]}</small><br>${s[3]}</p>`).join('')}</div>`);
+
+    // 11 Gemstones
+    const G = R.gemPlan(c, cd), CAT = { yes: ['Suits your chart', 'good'], maybe: ['Neutral, situational', 'warn'], avoid: ['Not advised', 'bad'] };
+    h += sheet('Gemstones', 'रत्न', `<div class="kbox knotebox"><h3>Before you buy anything</h3><p>There is no scientific evidence that gemstones change events. A stone is optional: mantra, giving and conduct cost nothing and come first. Start with the inexpensive substitute, keep it with you for a few days before wearing it for good, ask for an independent laboratory certificate, and be wary of anyone who predicts disaster unless you buy.</p></div>`
+      + tbl(['Planet', 'Gemstone', 'For this chart', 'Why', 'Substitute', 'Metal · finger'], G.gems.map(g => { const m = D.GEM[g.p]; return [pl(g.p), `<b>${m[0]}</b><br><small>${m[1]}</small>`, pill(CAT[g.cat][0], CAT[g.cat][1]), g.why + (g.notes.length ? ' ' + g.notes[0] : ''), m[2], g.cat === 'avoid' ? '—' : `${m[3]} · ${m[4]}`]; }), 'ksm')
+      + `<div class="k2">${box('Favourable for you', kv([['Planets', G.lucky.map(PN).join(', ')], ['Days', [...new Set(G.lucky.map(k => D.REMEDY[k].day))].join(', ')], ['Colours', G.lucky.map(k => D.ATTR[k][0].split(',')[0]).join(', ')], ['Directions', G.lucky.map(k => D.ATTR[k][1]).filter(x => x !== '—').join(', ')]]))}${box('Source', '<p>The planet-to-gem pairing comes from texts such as Jataka Parijata and the gem chapters of the Garuda Purana, not from the Vedas or Upanishads. The verdicts use the house-rulership rule of later Parashari practice, and astrologers differ on details.</p>')}</div>`);
+
+    // 12 Nadi
+    const N = R.nadi(c, i.gender), nowAge = Math.max(0, age(now, c));
+    h += sheet('Nadi reading', 'भृगु नंदी नाड़ी', `<p class="kcap">The Bhrigu Nandi method reads planets as fixed significators and ignores houses. Planets in the same or trine signs act together; the next sign shows where a planet is heading, the previous sign what it comes from, the opposite sign what it faces.</p><div class="kcols two">${N.readings.map(r => `<div class="kitem"><h4 class="pl-${r.p}">${D.PLANETS[r.p].glyph} ${r.title} <small>${PN(r.p)} in ${SN(r.sign)}</small></h4>${r.groups.map(g => `<p class="kwhy">${g.label}</p><ul>${g.items.map(x => `<li><b>${PN(x.q)}:</b> ${x.text}</li>`).join('')}</ul>`).join('') || '<p>Acts alone, giving plain results of its own nature.</p>'}</div>`).join('')}</div>
+      <h3 class="ksub">Year by year: Jupiter's progression</h3>${tbl(['Age', 'From', 'Jupiter in', 'Meets', 'Themes'], R.nadiProgression(c, nowAge - 1, nowAge + 9).map(x => ({ cur: x.age === nowAge, cells: [x.age, fd(x.start), SN(x.sign), x.hit.map(PN).join(', ') || '—', x.text] })), 'ksm')}`);
+
+    // 13 Method and glossary
+    h += sheet('Method and glossary', 'विधि एवं शब्दावली', `<div class="k2">${box('How this was calculated', '<ul><li>Planet positions from the Astronomy Engine library, checked against Swiss Ephemeris to within about 10 arc-seconds for 1900 to 2100.</li><li>Sidereal zodiac, Lahiri ayanamsa unless stated; whole-sign houses; mean lunar node.</li><li>Vimshottari dasha on a 365.25-day year.</li><li>Readings follow rules in Brihat Parashara Hora Shastra, Phaladeepika, Saravali, Jataka Parijata and the Bhrigu Nandi Nadi method, written fresh in plain English.</li></ul>')}${box('What to keep in mind', '<p>The astronomy here is exact. The meanings are a traditional interpretive system, not a tested science, and a rule-based reading cannot weigh a chart the way an experienced astrologer does. Use this report for reflection, not for medical, legal or financial decisions.</p>')}</div>
+      <h3 class="ksub">Glossary</h3><div class="kcols three kgl">${Object.keys(D.GLOSSARY).map(k => `<p><b>${D.GLOSSARY[k][0]}.</b> ${D.GLOSSARY[k][1]}</p>`).join('')}</div>${A.name ? `<p class="kcap kend">© ${now.getFullYear()} ${esc(A.name)} · Jyotish Darpan</p>` : ''}`);
+    st.aspP = keepAsp; st.selHouse = keepSel;
+    return h;
+  }
+  function vKundali() {
+    return `<div class="noprint"><p class="lead">The chart laid out as a Kundali booklet: a cover, then thirteen numbered sections typeset for A4 paper, from birth particulars and the four charts to dashas, periods to watch, remedies and a glossary. What you see below is the document as it will print.</p>
+      <div class="cta">${framed ? '' : '<button class="btn primary big" id="rprint" type="button">Print or save as PDF</button>'}<button class="btn ${framed ? 'primary' : ''} big" id="rsave" type="button">Download Kundali file</button></div>
+      <p class="hint">${framed ? 'Inside Claude a page cannot open the print dialog. Download the Kundali file, open it in your browser, then choose Print and "Save as PDF".' : 'In the print dialog choose "Save as PDF" and switch on "Background graphics" to keep the colours.'} The report is in the language selected in the header for names and headings. Today, Transits, Matching and AstroGuru are left out because they change by the day or need a second person.</p><p id="rmsg" class="err" role="status"></p></div>
+      <div id="reportdoc" class="kdoc">${reportHTML()}</div>`;
+  }
+  async function reportSave() {
+    const msg = t => { const e = $('#rmsg'); if (e) e.textContent = t; }, name = (st.input.name || 'Kundali').replace(/[^\p{L}\p{N} _-]/gu, '').trim() || 'Kundali';
+    try { if (REP.css === null) REP.css = await (await fetch('app.css')).text(); } catch (e) { REP.css = Array.from(document.styleSheets).map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join('\n'); } catch (x) { return ''; } }).join('\n'); }
+    const body = $('#reportdoc').innerHTML, doc = `<!DOCTYPE html><html lang="${lang}" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kundali - ${esc(name)}</title><link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mukta:wght@400;500;600;700&family=Noto+Sans+Gurmukhi:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&display=swap" rel="stylesheet"><style>${REP.css}</style></head><body class="standalone"><p class="noprint sabar">To make a PDF: open your browser's Print (Ctrl+P or Cmd+P), choose "Save as PDF" and switch on "Background graphics".</p><div class="kdoc">${body}</div></body></html>`;
+    const file = `Kundali - ${name}.html`;
+    try {
+      const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+      if (dl) { await dl.save({ filename: file, data: doc }); msg('Saved. Open the file in a browser and print it to PDF.'); }
+      else if (!framed) { const u = URL.createObjectURL(new Blob([doc], { type: 'text/html' })), a = document.createElement('a'); a.href = u; a.download = file; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); msg('Downloaded. Open the file in a browser and print it to PDF.'); }
+      else msg('This view cannot save files. Open the page in a normal browser tab and use Print there.');
+    } catch (e) { msg(e && e.code === 'declined' ? 'Download cancelled.' : 'The file could not be saved here. Open the page in a normal browser tab and use Print.'); }
   }
 
   /* ================= Languages ================= */

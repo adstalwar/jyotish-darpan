@@ -107,3 +107,75 @@
   Object.assign(R, { portrait, match, manglik, starInfo });
   D.GANANAME = GN; D.NADINAME = NADIN;
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* Character sketch (written) and build figure */
+(function (root) {
+  'use strict';
+  const J = root.Jyotish, D = root.JD, R = root.JRules, ord = R.ord, PN = p => D.PLANETS[p].name, SN = i => D.SIGNS[i].name;
+  const SC = [
+    ['direct, quick and energetic. You get to the point and people know where they stand with you', 'You start things, decide fast and work best with autonomy and a clear target. Routine bores you', 'you get impatient, push harder or pick a fight', 'starting more than you finish, and hearing advice as an obstacle'],
+    ['calm, steady and pleasant, with a quiet stubbornness underneath', 'You build slowly and reliably, and dislike being rushed or having plans changed late', 'you dig in, go silent and resist every change', 'staying too long in what is comfortable'],
+    ['curious, talkative and quick, with a youthful manner', 'You learn fast, juggle several things and connect people with ideas. You need variety', 'you scatter, overthink and talk in circles', 'skimming the surface and leaving things half done'],
+    ['warm, careful and a little guarded until you trust someone', 'You look after the team, remember details about people and do your best work where you feel safe', 'you withdraw, take things personally and brood', 'letting mood decide, and holding on to old hurts'],
+    ['confident, warm and dignified. You carry yourself as someone to be taken seriously', 'You lead from the front, take pride in quality and need that quality to be recognised', 'your pride is hurt first, and you turn stubborn or commanding', 'needing to be right, and finding it hard to ask for help'],
+    ['modest, observant and precise. You notice what others miss', 'You improve things, catch errors and are trusted with detail. You prefer being useful to being in the limelight', 'you worry, criticise yourself and others, and over-prepare', 'perfectionism that delays finishing, and seeing flaws before merits'],
+    ['courteous, well presented and easy to be around', 'You mediate, design and negotiate, and you work best in partnership', 'you avoid the conflict, delay the decision and try to please everyone', 'putting harmony ahead of what you actually want'],
+    ['reserved, intense and watchful. You reveal little and observe a lot', 'You go deep, handle crises well and do not let go until a problem is solved', 'you go quiet, suspect motives and keep score', 'holding grudges, and testing people instead of trusting them'],
+    ['open, cheerful and frank, with strong opinions', 'You see the big picture, teach and encourage. Detail and follow-through tire you', 'you become blunt or restless, or you simply leave', 'promising more than you deliver, and preaching'],
+    ['serious, composed and older than your years', 'You are patient with long projects, respect structure and carry responsibility without fuss', 'you work even harder, close off and turn pessimistic', 'all duty and no rest, and measuring yourself only by achievement'],
+    ['friendly but detached, thoughtful and a little unconventional', 'You think in systems, care about the cause and work well in groups while staying independent', 'you detach, intellectualise and go distant', 'keeping people at arm\'s length, and stubbornness presented as principle'],
+    ['gentle, accommodating and slightly dreamy', 'You bring imagination and empathy and sense what a group needs. Hard deadlines and conflict drain you', 'you escape, procrastinate or absorb everyone else\'s mood', 'weak boundaries, and avoiding hard conversations']
+  ];
+  const MC = [
+    ['action and independence. Feelings come fast and pass fast', 'You show love by doing and defending, and need a partner who can take directness'],
+    ['security, comfort and routine. You are emotionally steady', 'You are loyal, affectionate and physically warm, slow to commit and slow to leave'],
+    ['conversation and mental stimulation. You work out what you feel by talking', 'You need a partner who is also a friend to talk to'],
+    ['belonging and a home base. You feel deeply and remember everything', 'You are nurturing and protective, and need reassurance in return'],
+    ['appreciation and respect. You are generous when you feel valued', 'You are warm, proud and loyal, and need to be admired, not managed'],
+    ['order and usefulness. You worry when things are untidy or uncertain', 'You show love through practical help and need it to be noticed'],
+    ['companionship and harmony. Being alone for long unsettles you', 'You are considerate and romantic, need fairness and dislike rows'],
+    ['depth and complete trust. You feel intensely and privately', 'Your loyalty is all or nothing, and betrayal is hard for you to forgive'],
+    ['freedom, meaning and room to move. You stay optimistic', 'You need a partner who shares your beliefs and gives you space'],
+    ['achievement and control. You keep feelings in check', 'You are reserved but dependable, and show love through responsibility'],
+    ['space and a cause. You observe your feelings from a distance', 'Friendship comes first, and you need independence inside a relationship'],
+    ['quiet, imagination and something to devote yourself to', 'You are tender and self-giving, and need gentleness and clear boundaries']
+  ];
+  const DRIVE = { Su: 'to be recognised and to lead', Mo: 'to care for people and to belong', Ma: 'to act, compete and win', Me: 'to understand, explain and trade ideas', Ju: 'to grow, teach and find meaning', Ve: 'to enjoy, create and relate', Sa: 'to build something lasting through discipline', Ra: 'to achieve something out of the ordinary', Ke: 'to see beneath the surface and be free of it' };
+  const IMP = { Su: 'more commanding', Mo: 'softer and more approachable', Ma: 'more forceful and restless', Me: 'quicker and more talkative', Ju: 'wiser, more generous and more optimistic', Ve: 'more charming and polished', Sa: 'more serious, reserved and older-seeming', Ra: 'more ambitious, unconventional and hard to read', Ke: 'more detached and private' };
+  const EA = { Fire: 'confident and active', Earth: 'practical and steady', Air: 'sociable and quick-thinking', Water: 'feeling and sensitive' };
+  const FIG = [[1, 1, 'long'], [0.5, 2, 'broad'], [2, 0, 'long'], [0.5, 1.6, 'round'], [1.3, 1.6, 'broad'], [1, 0, 'oval'], [1.6, 1, 'oval'], [1, 1.5, 'broad'], [2, 1.4, 'long'], [1, 0.2, 'long'], [1.8, 1.2, 'oval'], [0.4, 1.7, 'round']];
+  const FMOD = { Su: [0, 0.2], Mo: [0, 0.3], Ma: [0, 0.2], Me: [0, -0.3], Ju: [0, 0.5], Ve: [0, 0], Sa: [0.3, -0.5], Ra: [0.3, 0], Ke: [0, -0.3] };
+
+  function character(c, gender) {
+    const p = c.planets, asc = c.asc.sign, mo = p.Mo.sign, in1 = c.houses[0].planets, le = D.SIGNS[asc].element, me = D.SIGNS[mo].element, out = [];
+    const score = {}, bump = (k, n) => score[k] = (score[k] || 0) + n;
+    [1, 10].forEach(h => c.houses[h - 1].planets.forEach(k => bump(k, 2))); [5, 9, 7, 4].forEach(h => c.houses[h - 1].planets.forEach(k => bump(k, 1)));
+    J.P.forEach(k => { if (['exalted', 'own', 'moolatrikona'].includes(p[k].dignity)) bump(k, 2); if (p[k].vargottama) bump(k, 0.5); }); bump(c.houses[0].lord, 1.5); bump(p.Mo.nak.lord, 0.5);
+    const dom = Object.keys(score).sort((a, b) => score[b] - score[a])[0];
+    const hl = h => { const hs = c.houses[h - 1]; return `Your ${ord(h)} house is ${SN(hs.sign)}; its ruler ${PN(hs.lord)} sits in the ${ord(p[hs.lord].house)} house, tying it to ${D.HOUSES[p[hs.lord].house - 1].themes}.`; };
+    const st = h => R.houseFactors(c, h).stars;
+    out.push(['How you come across', [`On first meeting you seem ${SC[asc][0]}.${in1.length ? ` ${R.list(in1.map(PN))} in the first house shade${in1.length > 1 ? '' : 's'} that impression: ${in1.map(k => PN(k) + ' makes you ' + IMP[k]).join('; ')}.` : ''}`]]);
+    out.push(['The private you', [`Underneath, what you need is ${MC[mo][0]}.`, le !== me ? `There is a gap between the two: outside you are ${EA[le]}, inside you run on something more ${EA[me]}. People who know you only at work may be surprised by you at home.` : `Outside and inside match: both are ${EA[le]}. What people see is largely what you are.`]]);
+    out.push(['What drives you', [`The strongest planet in the chart is ${PN(dom)}, so the deepest motive is ${DRIVE[dom]}. When life gives no outlet for that, you feel flat however well other things go.`]]);
+    out.push(['At work', [`${SC[asc][1]}.`, hl(10) + (c.houses[9].planets.length ? ` ${R.list(c.houses[9].planets.map(PN))} there ${c.houses[9].planets.length > 1 ? 'add' : 'adds'}: ${c.houses[9].planets.map(k => D.PIH[k][9]).join(' ')}` : ''), st(10) >= 4 ? 'Career is one of the stronger parts of the chart: effort here is noticed.' : st(10) <= 2 ? 'Career asks for patience: recognition tends to trail the effort.' : 'Career is steady: it rewards consistency more than brilliance.']]);
+    out.push(['In close relationships', [`${MC[mo][1]}.`, hl(7) + (c.houses[6].planets.length ? ' ' + c.houses[6].planets.map(k => `${PN(k)} in the 7th: ${D.PIH[k][6]}`).join(' ') : ''), st(7) >= 4 ? 'Partnership is well supported in the chart.' : st(7) <= 2 ? 'Partnership takes conscious effort: say what you need instead of expecting it to be guessed.' : 'Partnership is workable and improves with time and plain talking.']]);
+    out.push(['With money', [(st(2) + st(11)) >= 8 ? 'Money tends to come steadily, and you keep it.' : (st(2) + st(11)) >= 6 ? 'Money comes with effort and planning; saving is a habit to build, not a given.' : 'Money needs discipline: budget, avoid lending and stay away from speculation.', hl(2), hl(11)]]);
+    out.push(['Under pressure', [`When stressed, ${SC[asc][2]}. The Moon in ${SN(mo)} means the first thing to go is ${['patience', 'flexibility', 'focus', 'composure', 'humility', 'sleep', 'decisiveness', 'trust', 'tact', 'warmth', 'closeness', 'grip on practical things'][mo]}.`, `What steadies you: ${D.COPE[p.Mo.dignity === 'debilitated' || p.Mo.combust ? 'Mo' : c.houses[0].lord]}`]]);
+    const weak = J.P.filter(k => p[k].dignity === 'debilitated' || p[k].combust).slice(0, 2);
+    out.push(['Blind spots', [`The usual one for ${SN(asc)} rising is ${SC[asc][3]}.`].concat(weak.map(k => `${PN(k)} is weak in the chart, which shows up as ${D.ILL[k]}.`))]);
+    const areas = R.lifeAreas(c, gender).slice().sort((a, b) => b.stars - a.stars), good = R.yogas(c).filter(y => y.kind === 'good').slice(0, 2);
+    out.push(['What brings out your best', [`You are at your best in ${R.list(areas.slice(0, 2).map(a => a.title.toLowerCase()))}.${good.length ? ' The chart backs this with ' + R.list(good.map(y => y.name)) + '.' : ''}`, D.ADVICE[asc]]]);
+    return out;
+  }
+  function figure(c) {
+    let [h, b, face] = FIG[c.asc.sign]; c.houses[0].planets.forEach(k => { h += FMOD[k][0]; b += FMOD[k][1]; }); if (c.houses[0].planets.includes('Mo')) face = 'round';
+    h = Math.max(0, Math.min(2.3, h)); b = Math.max(0, Math.min(2.3, b));
+    const H = 236 + h * 34, top = 344 - H, sh = 30 + b * 9, wa = 20 + b * 8, hip = 23 + b * 7, hd = { round: [19, 20], oval: [16.5, 21], long: [15, 23], broad: [20, 20] }[face], cx = 100;
+    const hy = top + hd[1], ny = hy + hd[1] + 5, sy = ny + 9, wy = sy + H * 0.30, hpy = wy + H * 0.09, ky = hpy + H * 0.24, fy = 344, arm = 9 + b * 2.2, leg = hip * 0.56;
+    const body = `M${cx - sh} ${sy}Q${cx} ${sy - 9} ${cx + sh} ${sy}L${cx + wa} ${wy}L${cx + hip} ${hpy}L${cx + hip - 2} ${ky}L${cx + leg + 3} ${fy}L${cx + 3} ${fy}L${cx} ${hpy + 14}L${cx - 3} ${fy}L${cx - leg - 3} ${fy}L${cx - hip + 2} ${ky}L${cx - hip} ${hpy}L${cx - wa} ${wy}Z`;
+    const armP = s => `M${cx + s * sh} ${sy + 2}L${cx + s * (sh + arm + 3)} ${wy + 6}L${cx + s * (sh + arm)} ${hpy + 26}L${cx + s * (sh + arm - 7)} ${hpy + 24}L${cx + s * (sh - 2)} ${wy - 10}Z`;
+    const ticks = [0, 1, 2].map(i => `<line class="fgl" x1="18" x2="182" y1="${344 - (236 + i * 34)}" y2="${344 - (236 + i * 34)}"/><text class="fgt" x="182" y="${344 - (236 + i * 34) - 3}" text-anchor="end">${['short', 'medium', 'tall'][i]}</text>`).join('');
+    return { svg: `<svg class="figure" viewBox="0 0 200 356" role="img" aria-label="Illustration of the build described for this rising sign">${ticks}<line class="fgb" x1="18" x2="182" y1="344" y2="344"/><path class="fga" d="${armP(1)}"/><path class="fga" d="${armP(-1)}"/><path class="fgbody" d="${body}"/><rect class="fgbody" x="${cx - 6}" y="${ny - 6}" width="12" height="14"/><ellipse class="fghead" cx="${cx}" cy="${hy}" rx="${hd[0]}" ry="${hd[1]}"/></svg>`, height: h < 0.8 ? 'shorter than average' : h > 1.5 ? 'taller than average' : 'medium height', build: b < 0.7 ? 'slim' : b > 1.5 ? 'broad and solid' : 'medium', face: { round: 'round', oval: 'oval', long: 'long', broad: 'broad' }[face] };
+  }
+  Object.assign(R, { character, figure });
+})(typeof window !== 'undefined' ? window : globalThis);
