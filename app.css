@@ -152,9 +152,9 @@ details { margin-top: .5rem; } summary { cursor: pointer; color: var(--accent); 
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .baract { display: flex; gap: 8px; align-items: center; } #lang { width: auto; background: transparent; color: var(--sky-ink); border-color: #4a4a72; padding: .38rem .5rem; font-size: .92rem; } #lang option { color: #1b1938; background: #fff; }
 .shell { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: 28px; align-items: start; }
-.side { position: sticky; top: 12px; padding: 1.4rem 0 1rem; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 24px); overflow-y: auto; scrollbar-width: none; } .side::-webkit-scrollbar { display: none; }
+.side { position: sticky; top: 12px; padding: 1rem 0 .8rem; display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 24px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; } .side::-webkit-scrollbar { width: 6px; } .side::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
 .ng { display: flex; flex-direction: column; gap: 1px; } .ng .k { padding: 0 .7rem .25rem; font-size: .7rem; }
-.side a { padding: .38rem .7rem; border-radius: 7px; color: var(--muted); text-decoration: none; font-weight: 500; border-left: 3px solid transparent; } .side a:hover { background: var(--surface-2); color: var(--ink); } .side a.on { background: var(--surface); color: var(--ink); border-left-color: var(--accent-fill); font-weight: 600; }
+.side a { padding: .27rem .7rem; font-size: .94rem; border-radius: 7px; color: var(--muted); text-decoration: none; font-weight: 500; border-left: 3px solid transparent; } .side a:hover { background: var(--surface-2); color: var(--ink); } .side a.on { background: var(--surface); color: var(--ink); border-left-color: var(--accent-fill); font-weight: 600; }
 .navbtn { display: none; width: 100%; justify-content: space-between; align-items: center; margin-bottom: 4px; } .navbtn b { font-weight: 600; }
 .content { min-width: 0; } .content > .note { margin: 0 0 4px; }
 @media (max-width: 900px) {
@@ -282,3 +282,13 @@ body.standalone { background: #e9e7f1; padding: 0 0 20px; } body.standalone .kdo
 .kdosha { margin-bottom: 4mm; } .kdosha h3, .kdosha .kwhy { break-after: avoid; } .kdosha li { break-inside: avoid; } .kdosha.present { border-left: 3px solid #ad2a22; } .kdosha.mild, .kdosha.eased { border-left: 3px solid #c58a1a; }
 .kdosha h4 { font-size: 9.5pt; margin: 2mm 0 1mm; } .kdosha ol, .kdosha ul { margin: 0; padding-left: 4.5mm; font-size: 8.6pt; } .kdosha h3 small { font-weight: 600; color: #8f5200; margin-left: 2mm; }
 .ksheet .kbox.kdosha, .ksheet .kdosha .k2 { break-inside: auto; page-break-inside: auto; }
+
+/* Numerology */
+.nname { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); } .nname input { min-width: 240px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
+.loshu { display: grid; grid-template-columns: repeat(3, 1fr); width: min(260px, 100%); border: 2px solid var(--accent-fill); border-radius: 10px; overflow: hidden; margin: .6rem 0; }
+.loshu div { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--line); position: relative; color: var(--muted); }
+.loshu div.on { background: var(--accent-soft); color: var(--ink); } .loshu b { font: 600 1.35rem var(--display); letter-spacing: .05em; } .loshu small { position: absolute; top: 4px; left: 7px; font-size: .7rem; opacity: .6; }
+.loshu.sm { width: 42mm; } .loshu.sm b { font-size: 12pt; }
+.nmonths { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; } .nmonths div { border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; display: grid; grid-template-columns: auto 1fr; gap: 0 8px; align-items: baseline; }
+.nmonths div.cur { border-color: var(--accent-fill); background: var(--accent-soft); } .nmonths b { font: 600 1.2rem var(--display); grid-row: span 2; } .nmonths span { font-size: .8rem; color: var(--muted); grid-column: 2; }
+.kbig { font: 600 22pt var(--display); margin: 0; color: #14173a; } .kbig small { font-size: 10pt; color: #5a577a; }

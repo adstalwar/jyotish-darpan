@@ -347,6 +347,7 @@
         ${d.fromMoon === 8 ? `<div class="alert"><b>Chandrashtama.</b> The Moon is in the 8th sign from your Moon until ${ft(d.moonUntil)}. Keep the day simple.</div>` : ''}
         <p><b>Moon in ${SN(d.mo.sign)}</b>, ${ord(d.fromMoon)} from your Moon and in your ${ord(d.house)} house (${D.HOUSES[d.house - 1].title.toLowerCase()}), until ${ft(d.moonUntil)}.</p><p>${D.MOONGO[d.fromMoon - 1]}</p>
         <p><b>Star of the day: ${nk.name}</b>, until ${ft(d.nakUntil)}. Counted from your birth star it is <b>${T[0]} Tara</b> ${pill(T[1] > 0 ? 'Favourable' : T[1] < 0 ? 'Testing' : 'Sensitive', T[1] > 0 ? 'good' : T[1] < 0 ? 'bad' : 'warn')}. ${T[2]}</p>
+        ${(() => { const pd = R.numerology(c, numState()).today; return `<p><b>Numerology: personal day ${pd.day}</b> (personal year ${pd.year}). ${R.NUM.DAY[pd.day]}</p>`; })()}
         <div class="grid doav"><div><h4>Good for</h4><ul>${d.doList.map(x => `<li>${x}</li>`).join('')}</ul></div><div><h4>Go easy on</h4><ul>${d.avoid.map(x => `<li>${x}</li>`).join('')}</ul></div></div></section>
       <section class="card"><h2>The day in detail</h2>
         <div class="kv"><div><span>Weekday</span><b>${D.VARA[d.wd][0]}</b><small>Ruled by ${PN(d.dayLord)}</small></div><div><span>${term('tithi', 'Tithi')}</span><b>${d.tithi > 14 ? 'Krishna' : 'Shukla'} ${tn}</b><small>${d.tithi > 14 ? 'Waning' : 'Waxing'} Moon</small></div><div><span>Yoga</span><b>${D.YOGA27[d.yoga]}</b><small>Sun and Moon combined</small></div>${cd ? `<div><span>${term('dasha', 'Running periods')}</span><b>${PN(cd.m.lord)} – ${PN(cd.a.lord)} – ${PN(cd.p.lord)}</b><small>Sub-sub-period until ${fd(cd.p.end)}</small></div>` : ''}</div>
@@ -388,6 +389,44 @@
     <h2 class="sec">For peace in any period</h2><section class="card"><div class="shanti">${D.SHANTI.map(s => `<div><p class="mantra"><span lang="sa">${s[0]}</span><small>${s[1]}</small></p><p>${s[3]}</p><p class="hint">${s[2]}</p></div>`).join('')}</div></section>
     ${rest.length ? `<h2 class="sec">The other planets</h2><div class="grid cards wide">${rest.map(p => remedyCard(p)).join('')}</div>` : ''}`;
   }
+  /* ================= Numerology ================= */
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function numState() { return { sys: st.numSys || store.get('jd.numsys', 'chaldean'), name: st.numName != null ? st.numName : (st.input.name || '') }; }
+  function loshu(g, small) {
+    return `<div class="loshu${small ? ' sm' : ''}">${R.NUM.LOSHU.flat().map(n => `<div class="${g.count[n] ? 'on' : ''}"><b>${g.count[n] ? String(n).repeat(g.count[n]) : ''}</b><small>${n}</small></div>`).join('')}</div>`;
+  }
+  function vNumer() {
+    const ns = numState(), n = R.numerology(st.chart, ns), U = R.NUM, PL = U.PLANET, nm = n.names, rt = U.REL_TXT;
+    const tile = (k, v, sub) => `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="sub">${sub}</span></div>`;
+    const hv = { harmonious: ['Harmonious', 'good'], neutral: ['Neutral', 'warn'], clash: ['Clashes', 'bad'] };
+    return `<p class="lead">Indian numerology (Anka Shastra) links each number from 1 to 9 to one of the nine planets. Your <b>birth number</b> (Mulank) describes your nature, your <b>destiny number</b> (Bhagyank) the direction life pushes you, and your <b>name number</b> how you come across. Each is also read against your birth chart.</p>
+    <div class="tctl left"><label class="nname">Name as you use it <input id="nname" value="${esc(ns.name)}" autocomplete="off" spellcheck="false"></label><div class="seg">${[['chaldean', 'Chaldean'], ['pythagorean', 'Pythagorean']].map(([k, l]) => `<button class="${ns.sys === k ? 'on' : ''}" data-nsys="${k}">${l}</button>`).join('')}</div></div>
+    <div class="grid tiles">${tile('Birth number (Mulank)', `${n.mulank} · ${PN(PL[n.mulank])}`, `Day of birth ${st.input.d} · ${n.mul.key}`)}${tile('Destiny number (Bhagyank)', `${n.bhagyank} · ${PN(PL[n.bhagyank])}`, `Full date adds to ${n.bhagyankCompound} · ${n.bha.key}`)}${nm && nm.current.number ? tile('Name number', `${nm.current.number} · ${PN(PL[nm.current.number])}`, `${ns.sys === 'chaldean' ? 'Chaldean' : 'Pythagorean'} total ${nm.current.compound}`) : tile('Name number', '—', 'Type a name in English letters')}${tile(`Personal year ${n.personal[0].y}`, n.personal[0].year, U.NUM[n.personal[0].year].key)}</div>
+    <div class="grid two">
+      <section class="card prose"><h2>Your nature: ${n.mulank}, ${n.mul.key.toLowerCase()}</h2><p>${n.mul.self}</p><p class="hint">${n.links[0].text}${n.links[0].strong ? ' A strong planet, so the good side of this number shows readily.' : n.links[0].weak ? ' A weak planet, so the number\'s lessons come through effort.' : ''}</p></section>
+      <section class="card prose"><h2>Your direction: ${n.bhagyank}, ${n.bha.key.toLowerCase()}</h2><p>${n.bha.path}</p>${n.links[1] ? `<p class="hint">${n.links[1].text}${n.links[1].strong ? ' A strong planet, which supports this path.' : n.links[1].weak ? ' A weak planet, so this path asks for patience.' : ''}</p>` : '<p class="hint">Your birth and destiny numbers are the same, which concentrates that planet\'s influence.</p>'}<p>Your birth and destiny numbers are <b>${rt[n.mb]}</b>${n.mb < 0 ? ', so what you are and where life pulls you can feel at odds at times' : n.mb > 0 ? ', so your nature and your path support each other' : ''}.</p></section>
+    </div>
+    <div class="grid two">
+      <section class="card"><h2>Lo Shu grid</h2><p class="hint">The digits of your birth date (zeros left out) plus your destiny number${st.input.d > 9 ? ' and birth number' : ''}: ${n.grid.digits.join(' ')}, placed in the 3×3 magic square.</p>${loshu(n.grid)}
+        <h4>Complete planes</h4>${n.grid.planes.filter(p => p.full).map(p => `<p>${pill(p.name, 'good')} ${p.meaning}</p>`).join('') || '<p class="hint">No complete row, column or diagonal.</p>'}
+        ${n.grid.planes.filter(p => p.empty).length ? `<h4>Empty planes</h4>${n.grid.planes.filter(p => p.empty).map(p => `<p>${pill(p.name, 'warn')} less natural ${p.meaning}</p>`).join('')}` : ''}</section>
+      <section class="card"><h2>Present and missing numbers</h2><ul class="fx">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => `<li class="${n.grid.count[k] ? 'up' : 'down'}"><b>${k}</b> ${n.grid.count[k] ? `${n.grid.count[k] > 1 ? `(${n.grid.count[k]} times, strong) ` : ''}${U.LOSHU_MEAN[k][0]}` : `missing: ${U.LOSHU_MEAN[k][1]}. Remedy: work with ${PN(PL[k])} (see Remedies).`}</li>`).join('')}</ul></section>
+    </div>
+    <h2 class="sec">Forecast</h2>
+    <div class="grid tiles">${n.personal.map((p, k) => `<section class="card"><span class="k">${k ? 'Personal year ' + p.y : 'This year, ' + p.y}</span><h3>${p.year} · ${U.NUM[p.year].key} <small>${PN(PL[p.year])}</small></h3><p>${U.NUM[p.year].year}</p></section>`).join('')}</div>
+    <section class="card"><h3>Months of ${n.personal[0].y}</h3><div class="nmonths">${n.months.map(x => `<div class="${x.m === new Date().getMonth() ? 'cur' : ''}"><small>${MONTHS[x.m]}</small><b>${x.n}</b><span>${U.DAY[x.n]}</span></div>`).join('')}</div><p class="hint">Today is personal day <b>${n.today.day}</b>: ${U.DAY[n.today.day]} The personal year runs January to December here; some numerologists start it on the birthday instead.</p></section>
+    <h2 class="sec">Lucky and supportive</h2>
+    <section class="card"><div class="kv"><div><span class="k">Friendly numbers</span><b>${n.lucky.numbers.join(', ')}</b></div><div><span class="k">Use with care</span><b>${n.lucky.avoid.join(', ') || '—'}</b></div><div><span class="k">Good days</span><b>${n.lucky.days.join(', ')}</b></div><div><span class="k">Colours</span><b>${n.lucky.colours.join('; ')}</b></div></div><p class="hint">Friendly numbers are those whose planets are friends of your birth-number planet and not enemies of your destiny-number planet. For dates of important events, prefer days that add up to a friendly number.</p></section>
+    <h2 class="sec">Name number and spelling</h2>
+    ${nm && nm.current.number ? `<section class="card"><p><b>${esc(ns.name)}</b> = ${nm.current.words.map(w => `${w.w} ${w.v}`).join(' + ')} = <b>${nm.current.compound}</b> → <b>${nm.current.number}</b> (${PN(PL[nm.current.number])}) ${pill(hv[nm.current.h.verdict][0], hv[nm.current.h.verdict][1])}</p>
+      <p>With your birth number it is <b>${rt[nm.current.h.a]}</b>, and with your destiny number <b>${rt[nm.current.h.b]}</b>.${[4, 8].includes(nm.current.number) ? ' Many Indian numerologists avoid 4 and 8 as name totals because they bring delays and struggle, though they suit some careers.' : ''}</p>
+      ${nm.firstName ? `<p class="hint">First name alone: ${nm.firstName.compound} → ${nm.firstName.number} (${PN(PL[nm.firstName.number])}). Soul number (vowels) ${nm.current.soul}, outer number (consonants) ${nm.current.persona}.</p>` : ''}
+      <h3>${nm.list.length ? (nm.current.h.verdict === 'harmonious' ? 'Optional spellings that fit even better' : 'Spellings that fit your numbers better') : 'Spelling suggestions'}</h3>
+      ${nm.list.length ? `<div class="scroll"><table><thead><tr><th>Spelling</th><th>Change</th><th>Total</th><th>Number</th><th>Fit</th></tr></thead><tbody>${nm.list.map(v => `<tr><td><b>${esc(v.full)}</b></td><td>${v.how}</td><td class="num">${v.compound}</td><td>${v.number} · ${PN(PL[v.number])}</td><td>${rt[v.h.a]} / ${rt[v.h.b]}</td></tr>`).join('')}</tbody></table></div>` : `<p>${nm.current.h.verdict === 'harmonious' ? 'Your current spelling already fits your numbers well; no change is needed.' : 'No small, natural change to this spelling gives a better fit. Try the name you actually sign with, or the other system.'}</p>`}
+      <p class="note">${U.NAME_NOTE}</p></section>` : '<section class="card"><p>Type your name above in English letters to see its number and spelling suggestions.</p></section>'}
+    <p class="hint">${U.NOTE}</p>`;
+  }
+
 
   /* ================= Doshas ================= */
   const DSTAT = { present: ['Present', 'bad'], mild: ['Mild', 'warn'], eased: ['Present, eased', 'warn'] };
@@ -464,7 +503,8 @@
       res = `<section class="card now"><div class="mscore"><div class="dial ${M.verdict[1]}"><b>${M.total % 1 ? M.total.toFixed(1) : M.total}</b><small>of 36</small></div><div><h2>${M.verdict[0]}</h2><p>18 is the traditional minimum, 24 and above is good, 32 and above is excellent.</p><div class="kv">${who(esc(gn) + ' (groom)', M.g)}${who(esc(bn) + ' (bride)', M.b)}</div></div></div>
         <ul>${M.flags.map(f => `<li>${f}</li>`).join('')}</ul></section>
       <section class="card"><h2>The eight tests</h2><div class="scroll"><table><thead><tr><th>Koota</th><th>Tests</th><th>Points</th><th></th><th>Detail</th></tr></thead><tbody>${M.kutas.map(k => `<tr><td><b>${k.name}</b></td><td>${k.about}</td><td class="num">${k.pts} / ${k.max}</td><td><span class="mbar"><i style="width:${(k.pts / k.max * 100).toFixed(0)}%" class="${k.pts / k.max >= 0.75 ? 'good' : k.pts / k.max >= 0.4 ? 'warn' : 'bad'}"></i></span></td><td>${k.detail}</td></tr>`).join('')}</tbody></table></div>
-        <p class="hint">The system is written for a bride and groom, and three tests (Varna, Vashya, Gana) score differently depending on which chart is which. Scoring tables for Vashya and Gana vary slightly between almanacs, so another app may differ by a point or two.</p></section>`;
+        <p class="hint">The system is written for a bride and groom, and three tests (Varna, Vashya, Gana) score differently depending on which chart is which. Scoring tables for Vashya and Gana vary slightly between almanacs, so another app may differ by a point or two.</p></section>
+      ${(() => { const NM = R.numMatch(st.input, m.chart.input); return `<section class="card"><h2>Numerology compatibility ${pill(NM.verdict, NM.verdict === 'Harmonious' ? 'good' : NM.verdict === 'Workable' ? 'warn' : 'bad')}</h2><p>${NM.text}</p><p class="hint">Read from the planets ruling each person's birth and destiny numbers. A light, supplementary check beside the eight kootas.</p></section>`; })()}`;
     }
     return `<p class="lead">Kundli matching (Ashtakoota Guna Milan) compares two people's Moon signs and birth stars on eight tests worth 36 points. It needs only the partner's birth details.</p>
     <p class="note">The score measures one traditional idea of compatibility. It cannot see character, values or how two people treat each other, and astrologers also compare the full charts. Do not accept or reject a person on this number alone.</p>
@@ -486,9 +526,9 @@
     try { st.partner = { name: v('m-name'), date: v('m-date'), time: v('m-time'), place: v('m-place'), lat, lon, tz, chart: J.compute({ y: d[0], m: d[1], d: d[2], h: t[0], min: t[1], lat, lon, tz: tzv, ayanamsa: st.chart.ayanamsaSys }) }; st.mRole = v('m-role'); render(); } catch (e) { err('Could not compute the chart: ' + e.message); }
   }
 
-  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['doshas', 'Doshas', vDoshas], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['kundali', 'Kundali PDF', vKundali], ['learn', 'Learn', vLearn]];
+  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['numerology', 'Numerology', vNumer], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['doshas', 'Doshas', vDoshas], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['kundali', 'Kundali PDF', vKundali], ['learn', 'Learn', vLearn]];
 
-  const GROUPS = [['You', ['overview', 'today', 'portrait', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['doshas', 'remedies', 'gemstones', 'match']], ['More', ['nadi', 'kundali', 'learn']]];
+  const GROUPS = [['You', ['overview', 'today', 'portrait', 'numerology', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['doshas', 'remedies', 'gemstones', 'match']], ['More', ['nadi', 'kundali', 'learn']]];
   function render() {
     const c = st.chart; if (!c) return;
     const i = st.input, t = TABS.find(x => x[0] === st.tab) || TABS[0];
@@ -585,6 +625,7 @@
     else if ((el = q('[data-hp]'))) { const k = el.dataset.hp, P = D.PLANETS[k], lon = HERO.lons[k]; heroInfo(`<b class="pl-${k}">${P.glyph} ${P.name}</b> (${P.sa}, <span lang="hi">${P.dev}</span>) stands for ${P.themes}. On this date it is in <b>${SN(Math.floor(lon / 30))}</b> at ${dms(lon % 30)}, in the star ${D.NAK[Math.floor(lon / (360 / 27))].name}.`); }
     else if ((el = q('[data-hs]'))) { const i = +el.dataset.hs, S = D.SIGNS[i], inn = J.P.filter(k => Math.floor(HERO.lons[k] / 30) === i); heroInfo(`<b>${S.glyph} ${S.name}</b> (${S.sa}, <span lang="hi">${S.dev}</span>) is a ${S.quality.toLowerCase()} ${S.element.toLowerCase()} sign ruled by ${PN(J.SIGN_LORD[i])}. ${inn.length ? 'Here on this date: ' + inn.map(PN).join(', ') + '.' : 'No planet is here on this date.'}`); }
     else if ((el = q('[data-hn]'))) { const n = D.NAK[+el.dataset.hn]; heroInfo(`<b>${n.name}</b> is one of the 27 nakshatras, the Moon's daily stations. Symbol: ${n.symbol}. Deity: ${n.deity}. People born under it are ${n.trait}.${el.classList.contains('on') ? ' The Moon is here on this date.' : ''}`); }
+    else if ((el = q('[data-nsys]'))) { st.numSys = el.dataset.nsys; store.set('jd.numsys', st.numSys); render(); }
     else if (t.id === 'gstart') { GURU.started = true; render(); }
     else if ((el = q('[data-gdepth]'))) { GURU.depth = el.dataset.gdepth; render(); }
     else if ((el = q('[data-gq]'))) guruSend(el.dataset.gq);
@@ -603,6 +644,7 @@
     if (e.target.id === 'tdate' && e.target.value) { stopPlay(); const d = e.target.value.split('-').map(Number); st.tDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
     if (e.target.id === 'speed') st.speed = +e.target.value;
     if (e.target.id === 'lang') setLang(e.target.value);
+    if (e.target.id === 'nname') { st.numName = e.target.value; render(); }
     if (e.target.id === 'mcity') { const c = D.CITIES.find(x => x.name + ', ' + x.region === e.target.value); if (c) { store.set('jd.city', c); if ($('#home').hidden) render(); else paintTimes(); } }
     if (['f-date', 'f-time', 'f-tz'].includes(e.target.id)) heroFromForm();
     if (e.target.id === 'ddate' && e.target.value) { const d = e.target.value.split('-').map(Number); st.dDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
@@ -688,6 +730,7 @@
       L.push('MAHADASHA SEQUENCE: ' + c.dasha.mahas.map(m => `${PN(m.lord)} ${m.start.getFullYear()}-${m.end.getFullYear()}`).join(', '));
     }
     const sn = satNow(); L.push('SADE SATI: ' + (sn.on ? `running, ${PHASE[sn.ph.rel][0]} to ${fd(sn.ph.to)}, whole cycle ${fd(sn.cyc.start)} to ${fd(sn.cyc.end)}` : sn.dh ? `Dhaiya running to ${fd(sn.dh.to)}` : `not running${sn.next ? ', next from ' + fd(sn.next.start) : ''}`) + '.');
+    { const NU = R.numerology(c, numState()); L.push(`NUMEROLOGY (${NU.sys}): birth number ${NU.mulank} (${PN(R.NUM.PLANET[NU.mulank])}), destiny number ${NU.bhagyank} (${PN(R.NUM.PLANET[NU.bhagyank])})${NU.names && NU.names.current.number ? `, name number ${NU.names.current.number} (total ${NU.names.current.compound}, ${NU.names.current.h.verdict})` : ''}; personal year ${NU.personal[0].year}, personal day today ${NU.today.day}; Lo Shu missing ${NU.grid.missing.join(',') || 'none'}.`); }
     L.push('DOSHAS (with status): ' + (R.doshas(c).found.map(d => `${d.name} [${d.status}] (${d.why})`).join(' | ') || 'none from the checked list'));
     L.push('YOGAS AND DOSHAS: ' + R.yogas(c).map(y => `${y.name} [${y.kind}] (${y.why}${y.note ? ' ' + y.note : ''})`).join(' | '));
     const d = R.daily(c, now); L.push(`TODAY: ${d.verdict[0]}; Moon in ${SN(d.mo.sign)}, ${d.fromMoon} from natal Moon, house ${d.house}; Tara ${D.TARA[d.tara][0]}.`);
@@ -852,6 +895,10 @@ CHART DATA
 
     // 6 Yogas
     const Y = R.yogas(c), yl = k => Y.filter(y => y.kind === k).map(y => `<div class="kitem ky ${y.kind}"><h4>${y.name}</h4><p>${y.meaning}</p><p class="kwhy">${y.why}${y.note ? ' ' + y.note : ''}</p></div>`).join('');
+    { const NU = R.numerology(c, numState()), U = R.NUM, PL = U.PLANET, nm = NU.names;
+      h += sheet('Numerology', 'अंक ज्योतिष', `<div class="k3">${box('Birth number (Mulank)', `<p class="kbig">${NU.mulank} <small>${PN(PL[NU.mulank])}</small></p><p><b>${NU.mul.key}.</b> ${NU.mul.self}</p><p class="kwhy">${NU.links[0].text}</p>`)}${box('Destiny number (Bhagyank)', `<p class="kbig">${NU.bhagyank} <small>${PN(PL[NU.bhagyank])}</small></p><p><b>${NU.bha.key}.</b> ${NU.bha.path}</p>${NU.links[1] ? `<p class="kwhy">${NU.links[1].text}</p>` : ''}`)}${box('Name number', nm && nm.current.number ? `<p class="kbig">${nm.current.number} <small>${PN(PL[nm.current.number])}</small></p><p>${esc(NU.name)} = ${nm.current.compound} (${NU.sys === 'chaldean' ? 'Chaldean' : 'Pythagorean'}). With the birth number ${U.REL_TXT[nm.current.h.a]}, with the destiny number ${U.REL_TXT[nm.current.h.b]}.</p>` : '<p>No name given.</p>')}</div>
+      <div class="k2">${box('Lo Shu grid', `${loshu(NU.grid, true)}<p class="kwhy">Digits ${NU.grid.digits.join(' ')}. Missing: ${NU.grid.missing.join(', ') || 'none'}. Complete planes: ${NU.grid.planes.filter(p => p.full).map(p => p.name).join(', ') || 'none'}.</p>`)}${box('Forecast', tbl(['Year', 'Number', 'Theme'], NU.personal.map(p => [p.y, `${p.year} · ${PN(PL[p.year])}`, U.NUM[p.year].year]), 'ksm') + `<p class="kwhy">Friendly numbers ${NU.lucky.numbers.join(', ')}; good days ${NU.lucky.days.join(', ')}; colours ${NU.lucky.colours.join('; ')}.</p>`)}</div>
+      ${nm && nm.list.length ? box('Spelling options', tbl(['Spelling', 'Change', 'Total', 'Number'], nm.list.map(v => [`<b>${esc(v.full)}</b>`, v.how, v.compound, `${v.number} · ${PN(PL[v.number])}`]), 'ksm') + `<p class="kwhy">${U.NAME_NOTE}</p>`) : ''}<p class="kcap">${U.NOTE}</p>`); }
     h += sheet('Yogas and doshas', 'योग एवं दोष', `<div class="k2"><div><h3 class="ksub good">Strengths</h3>${yl('good') || '<p>None from the checked list.</p>'}</div><div><h3 class="ksub warn">Mixed and to work with</h3>${yl('mixed') + yl('caution') || '<p>None from the checked list.</p>'}</div></div>`);
 
     // 7 Dasha
