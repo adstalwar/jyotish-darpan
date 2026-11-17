@@ -1,6 +1,6 @@
 # Jyotish Darpan
 
-Vedic astrology in plain language. Kundali (North and South Indian styles), Navamsa and Dasamsa, planet positions, Vimshottari dasha to three levels, live transits with an animated zodiac wheel, Sade Sati and Dhaiya for a whole life, yogas and doshas, house-by-house life readings, a Bhrigu Nandi Nadi reading, a daily reading, periods to watch with transitions, simple remedies with their sources, chart-specific gemstone guidance, a personality portrait, and kundli matching (Ashtakoota, 36 points).
+Vedic astrology in plain language. Kundali (North and South Indian styles), Navamsa and Dasamsa, planet positions, Vimshottari dasha to three levels, live transits with an animated zodiac wheel, Sade Sati and Dhaiya for a whole life, yogas and doshas, house-by-house life readings, a Bhrigu Nandi Nadi reading, a daily reading, periods to watch with transitions, simple remedies with their sources, chart-specific gemstone guidance, a personality portrait, kundli matching (Ashtakoota, 36 points), an interface in English, Hindi, Telugu and Punjabi, and AstroGuru, a Claude assistant that answers questions about the chart.
 
 Everything runs in the browser. No server, no API keys, no data leaves the device.
 
@@ -27,6 +27,10 @@ Any static server works:
 - Whole-sign houses, mean lunar node, Vimshottari dasha on a 365.25-day year.
 - Planets within 3 arc-minutes of a sign border are flagged, with a switch to read the chart either way.
 
+## AstroGuru
+
+AstroGuru needs a Claude sign-in, which Claude only provides on pages it hosts. On this static site the tab explains that and links to the Claude-hosted copy (`claudeUrl` in `index.html`). No API key is stored anywhere in this repository.
+
 ## Files
 
 | File | Purpose |
@@ -36,7 +40,10 @@ Any static server works:
 | `interpret.js` | Yoga, dosha, life-area, dasha and Nadi rules |
 | `guidance.js` | Daily reading, watch periods, transitions, remedies and gemstones |
 | `portrait.js` | Personality portrait and kundli matching |
+| `i18n.js` | Hindi, Telugu and Punjabi interface translations |
 | `ui.js`, `app.css`, `index.html` | Interface |
 | `sw.js`, `manifest.webmanifest` | Offline install |
 
 Interpretations follow classical Vedic astrology texts and are offered for reflection, not as medical, legal or financial advice.
+
+© 2026 Amandeep Singh Talwar. All rights reserved. [LinkedIn](https://www.linkedin.com/in/amantalwar/)

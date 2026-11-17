@@ -147,7 +147,7 @@
         <h3>Your mind</h3><p>${D.MOONSIGN[p.Mo.sign]} Your birth star ${nk.name} adds a nature that is ${nk.trait}.</p>
         ${good.length ? `<h3>Strengths in the chart</h3><ul>${good.map(x => `<li><b>${x.name}.</b> ${x.meaning}</li>`).join('')}</ul>` : ''}
         ${care.length ? `<h3>Things to work with</h3><ul>${care.map(x => `<li><b>${x.name}.</b> ${x.meaning}${x.note ? ' ' + x.note : ''}</li>`).join('')}</ul>` : ''}
-        <h3>Day to day</h3><p><a href="#today">Today's reading</a> · <a href="#watch">Periods to watch</a> · <a href="#remedies">Simple remedies</a> · <a href="#gemstones">Gemstones</a> · <a href="#portrait">Your portrait</a> · <a href="#match">Kundli matching</a></p>
+        <h3>Day to day</h3><p><a href="#today">Today's reading</a> · <a href="#watch">Periods to watch</a> · <a href="#remedies">Simple remedies</a> · <a href="#gemstones">Gemstones</a> · <a href="#guru">Ask AstroGuru</a> · <a href="#portrait">Your portrait</a> · <a href="#match">Kundli matching</a></p>
         ${cd ? `<h3>The period you are in</h3><p>${D.DASHA[cd.m.lord]} <a href="#dasha">See the full timeline</a>.</p>` : ''}
       </section>
     </div>
@@ -461,20 +461,22 @@
     try { st.partner = { name: v('m-name'), date: v('m-date'), time: v('m-time'), place: v('m-place'), lat, lon, tz, chart: J.compute({ y: d[0], m: d[1], d: d[2], h: t[0], min: t[1], lat, lon, tz: tzv, ayanamsa: st.chart.ayanamsaSys }) }; st.mRole = v('m-role'); render(); } catch (e) { err('Could not compute the chart: ' + e.message); }
   }
 
-  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
+  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['learn', 'Learn', vLearn]];
 
+  const GROUPS = [['You', ['overview', 'today', 'portrait', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['remedies', 'gemstones', 'match']], ['More', ['nadi', 'learn']]];
   function render() {
     const c = st.chart; if (!c) return;
     const i = st.input, t = TABS.find(x => x[0] === st.tab) || TABS[0];
     $('#idbar').innerHTML = `<div><h1>${esc(i.name || 'Kundali')}</h1><p>${new Date(Date.UTC(i.y, i.m - 1, i.d)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })} · ${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')} · ${esc(i.place || '')}${i.sample ? ' · <b>sample chart</b>' : ''}</p></div><div class="idact"><button class="btn" id="edit">Edit details</button>${framed ? '' : '<button class="btn" id="print">Print</button>'}</div>`;
-    $('#tabs').innerHTML = TABS.map(x => `<a href="#${x[0]}" class="${x[0] === t[0] ? 'on' : ''}" ${x[0] === t[0] ? 'aria-current="page"' : ''}>${x[1]}</a>`).join('');
+    $('#tabs').innerHTML = GROUPS.map(g => `<div class="ng"><span class="k">${g[0]}</span>${g[1].map(id => { const x = TABS.find(y => y[0] === id); return `<a href="#${id}" class="${id === t[0] ? 'on' : ''}" ${id === t[0] ? 'aria-current="page"' : ''}>${x[1]}</a>`; }).join('')}</div>`).join('');
+    $('#tabs').classList.remove('open'); $('#navbtn').innerHTML = `<span><i aria-hidden="true">☰</i> <span>Menu</span></span><b>${t[1]}</b>`;
     $('#view').innerHTML = t[2]();
     if (t[0] === 'transits') { const sp = $('#speed'); if (sp) sp.value = String(st.speed); }
   }
   function generate(input, keepTab) {
     try {
       st.chart = J.compute(input); st.input = input; st.sat = J.saturnCycles(st.chart, st.chart.ayanamsaSys);
-      st.mOpen = st.aOpen = null; st.partner = null; st.tcache = {}; st.selHouse = 1; st.aspP = null;
+      st.mOpen = st.aOpen = null; st.partner = null; GURU.msgs = []; cancelAnimationFrame(HERO.raf); st.tcache = {}; st.selHouse = 1; st.aspP = null;
       $('#home').hidden = true; $('#report').hidden = false; if (!keepTab) { st.tab = 'overview'; if (location.hash && location.hash !== '#overview') location.hash = 'overview'; }
       render(); window.scrollTo(0, 0);
     } catch (e) { $('#ferr').textContent = 'Could not compute the chart: ' + e.message; }
@@ -548,11 +550,23 @@
       if (st.play) { stopPlay(); render(); }
       else { st.play = true; t.textContent = 'Pause'; timer = setInterval(() => { st.tDate = new Date(st.tDate.getTime() + st.speed * J.DAY); refreshTransit(false); }, 110); }
     }
-    else if (t.id === 'edit') { stopPlay(); fillForm(st.input); profiles(); $('#report').hidden = true; $('#home').hidden = false; window.scrollTo(0, 0); }
+    else if (t.id === 'edit') { fillForm(st.input); profiles(); showHome(true); }
+    else if (q('#brand')) showHome();
+    else if (t.id === 'back') { $('#home').hidden = true; $('#report').hidden = false; render(); window.scrollTo(0, 0); }
+    else if (t.id === 'sample') generate(SAMPLE);
+    else if ((el = q('[data-demo]'))) { st.tab = el.dataset.demo; generate(st.chart && !st.input.sample ? st.input : SAMPLE, true); location.hash = st.tab; }
+    else if (q('#navbtn')) $('#tabs').classList.toggle('open');
+    else if (t.id === 'hnow') { HERO.mode = 'now'; HERO.base = new Date(); $('#hscrub').value = 0; $('#herocap').textContent = 'The sky right now'; heroSet(HERO.base, true); }
+    else if ((el = q('[data-hp]'))) { const k = el.dataset.hp, P = D.PLANETS[k], lon = HERO.lons[k]; heroInfo(`<b class="pl-${k}">${P.glyph} ${P.name}</b> (${P.sa}, <span lang="hi">${P.dev}</span>) stands for ${P.themes}. On this date it is in <b>${SN(Math.floor(lon / 30))}</b> at ${dms(lon % 30)}, in the star ${D.NAK[Math.floor(lon / (360 / 27))].name}.`); }
+    else if ((el = q('[data-hs]'))) { const i = +el.dataset.hs, S = D.SIGNS[i], inn = J.P.filter(k => Math.floor(HERO.lons[k] / 30) === i); heroInfo(`<b>${S.glyph} ${S.name}</b> (${S.sa}, <span lang="hi">${S.dev}</span>) is a ${S.quality.toLowerCase()} ${S.element.toLowerCase()} sign ruled by ${PN(J.SIGN_LORD[i])}. ${inn.length ? 'Here on this date: ' + inn.map(PN).join(', ') + '.' : 'No planet is here on this date.'}`); }
+    else if ((el = q('[data-hn]'))) { const n = D.NAK[+el.dataset.hn]; heroInfo(`<b>${n.name}</b> is one of the 27 nakshatras, the Moon's daily stations. Symbol: ${n.symbol}. Deity: ${n.deity}. People born under it are ${n.trait}.${el.classList.contains('on') ? ' The Moon is here on this date.' : ''}`); }
+    else if (t.id === 'gstart') guruSend('Welcome me in three sentences, naming my Lagna, Moon sign and current dasha. Then suggest three questions I could ask you.');
+    else if ((el = q('[data-gq]'))) guruSend(el.dataset.gq);
+    else if (t.id === 'gclear') { GURU.msgs = []; render(); }
     else if (t.id === 'print') { try { window.print(); } catch (x) { } }
     else if (t.id === 'online') searchOnline();
     else if (t.id === 'theme') { const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; store.set('jd.theme', r.dataset.theme); }
-    else if ((el = q('#places button'))) { const c = $('#places')._list[+el.dataset.i]; $('#f-place').value = c.name + (c.region ? ', ' + c.region : ''); $('#f-lat').value = c.lat; $('#f-lon').value = c.lon; $('#f-tz').value = c.tz || ''; showPlaces([]); }
+    else if ((el = q('#places button'))) { const c = $('#places')._list[+el.dataset.i]; $('#f-place').value = c.name + (c.region ? ', ' + c.region : ''); $('#f-lat').value = c.lat; $('#f-lon').value = c.lon; $('#f-tz').value = c.tz || ''; showPlaces([]); heroFromForm(); }
     else if ((el = q('[data-load]'))) { fillForm(store.get('jd.profiles', [])[+el.dataset.load]); }
     else if ((el = q('[data-del]'))) { const ps = store.get('jd.profiles', []); ps.splice(+el.dataset.del, 1); store.set('jd.profiles', ps); profiles(); }
     if (!q('.term')) hideTip();
@@ -560,14 +574,18 @@
   document.addEventListener('change', e => {
     if (e.target.id === 'tdate' && e.target.value) { stopPlay(); const d = e.target.value.split('-').map(Number); st.tDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
     if (e.target.id === 'speed') st.speed = +e.target.value;
+    if (e.target.id === 'lang') setLang(e.target.value);
+    if (['f-date', 'f-time', 'f-tz'].includes(e.target.id)) heroFromForm();
     if (e.target.id === 'ddate' && e.target.value) { const d = e.target.value.split('-').map(Number); st.dDate = new Date(d[0], d[1] - 1, d[2], 12); render(); }
   });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr[data-antar]')) { e.preventDefault(); e.target.click(); } if (e.key === 'Escape') hideTip(); });
   $('#f-place').addEventListener('input', e => searchLocal(e.target.value));
-  document.addEventListener('submit', e => { if (e.target.id === 'mform') { e.preventDefault(); runMatch(); } });
+  document.addEventListener('submit', e => { if (e.target.id === 'mform') { e.preventDefault(); runMatch(); } if (e.target.id === 'gform') { e.preventDefault(); const v = $('#gq').value; guruSend(v); } });
+  document.addEventListener('input', e => { if (e.target.id === 'hscrub') { $('#herocap').textContent = HERO.mode === 'birth' ? 'The sky at the birth moment you entered' : 'The sky right now'; heroSet(new Date(HERO.base.getTime() + (+e.target.value) * J.DAY), false); } });
+  document.addEventListener('keydown', e => { if (e.target.id === 'gq' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); guruSend(e.target.value); } if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-hp]')) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); } });
   document.addEventListener('input', e => { if (e.target.id === 'm-place') { const c = D.CITIES.find(x => x.name + ', ' + x.region === e.target.value); if (c) { $('#m-lat').value = c.lat; $('#m-lon').value = c.lon; $('#m-tz').value = c.tz; } } });
   $('#form').addEventListener('submit', e => { e.preventDefault(); const i = readForm(); if (!i) return; saveProfile(i); generate(i); });
-  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.some(x => x[0] === h) && h !== st.tab) { stopPlay(); st.tab = h; render(); window.scrollTo(0, 0); } });
+  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (TABS.some(x => x[0] === h) && st.chart && (h !== st.tab || $('#report').hidden)) { stopPlay(); st.tab = h; $('#home').hidden = true; $('#report').hidden = false; render(); window.scrollTo(0, 0); } });
 
   /* glossary tooltips */
   const tip = $('#tip');
@@ -578,20 +596,137 @@
   document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.term'); if (t) showTip(t); else hideTip(); });
   document.addEventListener('click', e => { const t = e.target.closest('.term'); if (t) showTip(t); });
 
-  /* header starfield */
-  (function () {
-    const cv = $('#stars'); if (!cv) return; const draw = () => {
-      const w = cv.width = cv.offsetWidth * 2, h = cv.height = cv.offsetHeight * 2, g = cv.getContext('2d'); let s = 7;
-      const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647; g.clearRect(0, 0, w, h); g.fillStyle = getComputedStyle(cv).color;
-      for (let i = 0; i < 150; i++) { const r = rnd() * 1.7 + 0.3; g.globalAlpha = 0.2 + rnd() * 0.7; g.beginPath(); g.arc(rnd() * w, rnd() * h, r, 0, 7); g.fill(); }
-    }; draw(); window.addEventListener('resize', draw);
-  })();
+  /* ================= Landing: live sky wheel ================= */
+  const HERO = { base: new Date(), date: new Date(), lons: null, mode: 'now', raf: 0 };
+  function heroLons(d) { const o = {}; J.P.forEach(p => o[p] = J.sidLon(p, d)); return o; }
+  function heroDraw(lons) {
+    const c = 280, f = n => n.toFixed(1), pt = (lon, r) => { const a = (90 + lon) * Math.PI / 180; return [c + r * Math.cos(a), c - r * Math.sin(a)]; };
+    const arc = (l1, l2, r1, r2) => { const a = pt(l1, r1), b = pt(l2, r1), d = pt(l2, r2), e = pt(l1, r2); return `M${f(a[0])} ${f(a[1])}A${r1} ${r1} 0 0 0 ${f(b[0])} ${f(b[1])}L${f(d[0])} ${f(d[1])}A${r2} ${r2} 0 0 1 ${f(e[0])} ${f(e[1])}Z`; };
+    let s = '<defs><radialGradient id="hg"><stop offset="0" stop-color="#e8bd66" stop-opacity=".38"/><stop offset="1" stop-color="#e8bd66" stop-opacity="0"/></radialGradient></defs>';
+    s += `<circle cx="${c}" cy="${c}" r="150" fill="url(#hg)"/>`;
+    const L = 360 / 27, mn = Math.floor(lons.Mo / L);
+    for (let i = 0; i < 27; i++) s += `<path class="hnak ${i === mn ? 'on' : ''}" data-hn="${i}" d="${arc(i * L + 0.5, (i + 1) * L - 0.5, 274, 260)}"><title>${D.NAK[i].name} nakshatra</title></path>`;
+    for (let i = 0; i < 12; i++) {
+      const g = pt(i * 30 + 15, 234), n = pt(i * 30 + 15, 211);
+      s += `<path class="hsign ${i % 2 ? 'alt' : ''}" data-hs="${i}" d="${arc(i * 30, i * 30 + 30, 254, 198)}"><title>${SN(i)} · ${D.SIGNS[i].sa}</title></path><text class="hglyph" x="${f(g[0])}" y="${f(g[1] + 7)}" text-anchor="middle">${D.SIGNS[i].glyph}</text><text class="hname" x="${f(n[0])}" y="${f(n[1] + 4)}" text-anchor="middle">${D.SIGNS[i].dev}</text>`;
+    }
+    [180, 152, 124].forEach(r => s += `<circle class="horb" cx="${c}" cy="${c}" r="${r}"/>`);
+    s += `<g class="hyantra"><rect x="${c - 46}" y="${c - 46}" width="92" height="92"/><path d="M${c - 46} ${c - 46}L${c + 46} ${c + 46}M${c + 46} ${c - 46}L${c - 46} ${c + 46}M${c} ${c - 46}L${c - 46} ${c}L${c} ${c + 46}L${c + 46} ${c}Z"/></g>`;
+    const arr = J.P.map(k => ({ k, lon: lons[k] })).sort((a, b) => a.lon - b.lon); let prev = null;
+    arr.forEach(o => {
+      o.lv = prev && o.lon - prev.lon < 10 ? (prev.lv + 1) % 3 : 0; prev = o; const [x, y] = pt(o.lon, 180 - o.lv * 28), e = pt(o.lon, 198);
+      s += `<line class="hspoke pl-${o.k}" x1="${f(x)}" y1="${f(y)}" x2="${f(e[0])}" y2="${f(e[1])}"/><g class="hpl pl-${o.k}" data-hp="${o.k}" tabindex="0" role="button" aria-label="${PN(o.k)}"><circle class="halo" cx="${f(x)}" cy="${f(y)}" r="19"/><circle class="disc" cx="${f(x)}" cy="${f(y)}" r="12.5"/><text x="${f(x)}" y="${f(y + 4)}" text-anchor="middle">${o.k}</text><title>${PN(o.k)} in ${SN(Math.floor(o.lon / 30))} ${dms(o.lon % 30)}</title></g>`;
+    });
+    return `<svg class="hwheel" viewBox="0 0 560 560" role="img" aria-label="The zodiac with the planets at their sidereal positions">${s}</svg>`;
+  }
+  function heroPaint() {
+    const box = $('#herowheel'); if (!box) return; box.innerHTML = heroDraw(HERO.lons);
+    const d = HERO.date, mo = HERO.lons.Mo, su = HERO.lons.Su, e = J.norm(mo - su), ti = Math.floor(e / 12), tn = ti % 15 === 14 ? (ti > 14 ? 'Amavasya' : 'Purnima') : D.TITHI[ti % 15];
+    $('#hdate').textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    $('#skynow').innerHTML = [['Moon', SN(Math.floor(mo / 30))], ['Nakshatra', D.NAK[Math.floor(mo / (360 / 27))].name], ['Tithi', (ti > 14 ? 'Krishna ' : 'Shukla ') + tn], ['Sun', SN(Math.floor(su / 30))]].map(x => `<span><small>${x[0]}</small><b>${x[1]}</b></span>`).join('');
+  }
+  function heroSet(date, tween) {
+    HERO.date = date; const target = heroLons(date); cancelAnimationFrame(HERO.raf);
+    if (!tween || !HERO.lons || matchMedia('(prefers-reduced-motion: reduce)').matches) { HERO.lons = target; return heroPaint(); }
+    const from = HERO.lons, t0 = performance.now(), step = now => { const k = Math.min(1, (now - t0) / 900), q = 1 - Math.pow(1 - k, 3), cur = {}; J.P.forEach(p => cur[p] = J.norm(from[p] + J.diff(target[p], from[p]) * q)); HERO.lons = cur; heroPaint(); if (k < 1) HERO.raf = requestAnimationFrame(step); };
+    HERO.raf = requestAnimationFrame(step);
+  }
+  function heroInfo(html) { $('#heroinfo').innerHTML = html; }
+  const FEATS = [['charts', 'कुं', 'Kundali charts', 'North and South Indian styles, Navamsa and Dasamsa. Select any house for its meaning.'], ['dasha', 'द', 'Dasha timeline', 'Which planet runs each stretch of life, down to the month.'], ['transits', 'गो', 'Live transits', 'An animated wheel of where the planets are now against the birth chart.'], ['sade-sati', 'श', 'Sade Sati', "Every pass of Saturn over the Moon across a lifetime."], ['today', 'आ', 'Daily reading', 'The tone of today from the Moon and the day\'s star.'], ['watch', 'सा', 'Periods to watch', 'Demanding stretches ahead, why they are flagged and what helps.'], ['remedies', 'उ', 'Remedies and gemstones', 'Simple practices with their sources, and stones judged for the chart.'], ['portrait', 'स्व', 'Portrait', 'Temperament, build, friends, interests and life advice.'], ['match', 'मि', 'Kundli matching', 'The 36-point Ashtakoota comparison of two charts.'], ['guru', 'गु', 'AstroGuru', 'Ask Claude questions about the chart in your own words.']];
+  function showHome(toForm) {
+    stopPlay(); $('#report').hidden = true; $('#home').hidden = false; $('#back').hidden = !st.chart;
+    $('#features').innerHTML = FEATS.map(x => `<button class="feat" data-demo="${x[0]}" type="button"><i data-noi18n lang="hi">${x[1]}</i><span><b>${x[2]}</b><small>${x[3]}</small></span></button>`).join('');
+    HERO.mode = 'now'; HERO.base = new Date(); $('#hscrub').value = 0; $('#herocap').textContent = 'The sky right now'; heroSet(HERO.base, false); drawStars();
+    if (toForm) $('#form').scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+  }
+  function heroFromForm() {
+    const d = $('#f-date').value.split('-').map(Number), t = $('#f-time').value.split(':').map(Number); if (d.length !== 3 || !d[0] || d[0] < 1000 || t.length < 2 || isNaN(t[0])) return;
+    let tz = $('#f-tz').value.trim() || 'Asia/Kolkata'; const m = tz.match(/^([+-])(\d{1,2})(?::?(\d{2}))?$/); if (m) tz = (m[1] === '-' ? -1 : 1) * (+m[2] * 60 + (+m[3] || 0));
+    try { const u = J.localToUtc(d[0], d[1], d[2], t[0], t[1], tz).date; HERO.mode = 'birth'; HERO.base = u; $('#hscrub').value = 0; $('#herocap').textContent = 'The sky at the birth moment you entered'; heroSet(u, true); } catch (e) { }
+  }
+
+  /* ================= AstroGuru (Claude) ================= */
+  const GURU = { msgs: [], busy: false, api: undefined, started: false };
+  function guruContext() {
+    const c = st.chart, i = st.input, p = c.planets, cd = currentDasha(), now = new Date(), L = [];
+    L.push(`Person: ${i.name || 'not given'}; born ${i.d}-${i.m}-${i.y} ${String(i.h).padStart(2, '0')}:${String(i.min).padStart(2, '0')} local time at ${i.place || 'unknown place'}; gender ${i.gender || 'not given'}. Today is ${now.toDateString()}.`);
+    L.push(`Lagna ${SN(c.asc.sign)} ${dms(c.asc.deg)}. Moon sign ${SN(p.Mo.sign)}, birth star ${D.NAK[p.Mo.nak.index].name} pada ${p.Mo.nak.pada}. Ayanamsa ${c.ayanamsaSys}. Whole-sign houses.`);
+    L.push('Planets: ' + J.P.map(k => `${PN(k)} ${SN(p[k].sign)} ${dms(p[k].deg)} house ${p[k].house} ${D.NAK[p[k].nak.index].name}-${p[k].nak.pada} ${p[k].dignity}${p[k].retro && k !== 'Ra' && k !== 'Ke' ? ' retrograde' : ''}${p[k].combust ? ' combust' : ''}${p[k].cusp ? ' ON SIGN BORDER (uncertain sign)' : ''}`).join('; '));
+    L.push('House lords: ' + c.houses.map(h => `H${h.num} ${SN(h.sign)} lord ${PN(h.lord)} in H${p[h.lord].house}`).join('; '));
+    if (cd) { const up = J.subPeriods(cd.m).filter(a => a.start > now).slice(0, 4); L.push(`Vimshottari now: ${PN(cd.m.lord)} mahadasha (${fd(cd.m.start)} to ${fd(cd.m.end)}), ${PN(cd.a.lord)} antardasha (to ${fd(cd.a.end)}), ${PN(cd.p.lord)} pratyantar (to ${fd(cd.p.end)}). Next antardashas: ${up.map(a => PN(a.lord) + ' from ' + fd(a.start)).join(', ')}. Mahadasha sequence: ${c.dasha.mahas.map(m => PN(m.lord) + ' ' + m.start.getFullYear()).join(', ')}.`); }
+    const sn = satNow(); L.push('Sade Sati: ' + (sn.on ? `running, ${PHASE[sn.ph.rel][0]}, whole cycle ${fd(sn.cyc.start)} to ${fd(sn.cyc.end)}` : sn.dh ? `Dhaiya running to ${fd(sn.dh.to)}` : `not running${sn.next ? ', next from ' + fd(sn.next.start) : ''}`) + '.');
+    L.push('Yogas and doshas found: ' + R.yogas(c).map(y => `${y.name} [${y.kind}] (${y.why}${y.note ? ' ' + y.note : ''})`).join(' | '));
+    const d = R.daily(c, now); L.push(`Today: ${d.verdict[0]}; Moon in ${SN(d.mo.sign)}, ${d.fromMoon} from natal Moon, house ${d.house}; Tara ${D.TARA[d.tara][0]}.`);
+    const W = R.watch(c, st.sat, now, 10); L.push('Flagged periods (next 10 years): ' + W.hard.slice(0, 12).map(h => `${h.title} ${fd(h.from)} to ${fd(h.to)}`).join('; ') + '. Supportive: ' + W.soft.slice(0, 6).map(h => `${h.title} ${fd(h.from)} to ${fd(h.to)}`).join('; ') + '.');
+    const G = R.gemPlan(c, cd), gl = k => G.gems.filter(g => g.cat === k).map(g => D.GEM[g.p][0]).join(', ') || 'none'; L.push(`Gemstones by house-rulership rule: suit ${gl('yes')}; neutral ${gl('maybe')}; not advised ${gl('avoid')}.`);
+    L.push('Life-area strength (1-5): ' + R.lifeAreas(c, i.gender).map(a => `${a.title} ${a.stars}`).join('; ') + '.');
+    return L.join('\n');
+  }
+  const GURU_RULES = lang => `You are AstroGuru, a Vedic astrology guide inside the Jyotish Darpan app. Answer the person's questions using ONLY the chart data below, which the app has already calculated; never recalculate positions or invent placements, dates or yogas that are not in the data. If the data does not cover a question, say so and say what would be needed.
+Style: warm, plain language, no jargon without a short explanation. Keep answers under 180 words unless asked for more. Name the chart factor behind each statement (for example "because Jupiter rules your 5th house"). Reply in ${lang}.
+Honesty: astrology is a traditional interpretive system, not a tested science. Describe tendencies, never certainties. Do not predict death, serious illness, accidents, divorce or disaster, and do not frighten. Do not give medical, legal or financial instructions; suggest a qualified professional for those. Do not tell anyone to accept or reject a marriage or a person. Remedies must be simple and free or cheap (mantra, giving, conduct); never push gemstones or paid rituals, and mention that a planet flagged ON SIGN BORDER has an uncertain sign.
+CHART DATA
+`;
+  const gfmt = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+  async function guruSend(q) {
+    if (GURU.busy || !GURU.api || !q.trim()) return; GURU.busy = true; GURU.started = true; GURU.msgs.push({ role: 'user', content: q.trim() }); render();
+    const hist = GURU.msgs.slice(-12).map(m => ({ role: m.role, content: m.content })); while (hist.length && hist[0].role !== 'user') hist.shift();
+    hist[0] = { role: 'user', content: GURU_RULES(window.JD_I18N.full[lang]) + guruContext() + '\n\nQUESTION\n' + hist[0].content };
+    try {
+      const r = await GURU.api(hist, { cache: false, onText: ({ text }) => { const el = $('#gstream'); if (el) { el.innerHTML = gfmt(text); el.scrollIntoView({ block: 'nearest' }); } } });
+      GURU.msgs.push({ role: 'assistant', content: r.text + (r.truncated ? ' …' : '') });
+    } catch (e) {
+      const code = e && e.code; GURU.msgs.pop();
+      GURU.err = code === 'not_granted' ? 'Claude did not get permission to answer. Press Start again and approve the prompt to use AstroGuru.' : code === 'rate_limited' ? 'Claude is busy or your usage limit is reached. Wait a minute and ask again.' : 'Claude could not answer just now. Try again in a moment.'; if (code === 'not_granted') GURU.started = false;
+    }
+    GURU.busy = false; render(); const box = $('#gthread'); if (box) box.scrollTop = box.scrollHeight;
+  }
+  function vGuru() {
+    const A = window.JD_AUTHOR || {}, err = GURU.err ? `<p class="err">${GURU.err}</p>` : ''; GURU.err = '';
+    const head = `<p class="lead">AstroGuru is Claude, given the chart this app has calculated. Ask it anything about the chart in your own words: what a period means, why something is flagged, what to focus on this year.</p>`;
+    if (GURU.api === null) return head + `<section class="card prose"><h2>AstroGuru runs inside Claude</h2><p>The assistant needs a Claude sign-in, and Claude only allows that on pages it hosts. This copy of the app is a plain website, so the chat is not available here. Everything else works as usual.</p><p>${A.claudeUrl ? `Open the Claude-hosted version, sign in with your Claude account, and the AstroGuru tab will be live: <a href="${esc(A.claudeUrl)}" target="_blank" rel="noopener">open Jyotish Darpan in Claude</a>.` : 'Open the Claude-hosted version of Jyotish Darpan and sign in with your Claude account to use it.'}</p><p class="hint">No API key is stored in this app, and your birth details are never sent anywhere from this website.</p></section>`;
+    if (GURU.api === undefined) return head + '<section class="card"><p>Connecting to Claude…</p></section>';
+    if (!GURU.started) return head + `<section class="card now prose"><h2>Sign in with Claude</h2><p>AstroGuru answers through your own Claude account. You are already signed in to Claude to see this page; when you press Start, Claude asks once for permission to answer on this page.</p><p>Each question sends the calculated chart (birth details, positions, periods and the app's findings) to Claude so it can answer. Nothing is sent before you press Start.</p>${err}<p><button class="btn primary big" id="gstart" type="button">Start AstroGuru</button></p></section>`;
+    const sug = ['What should I focus on this year?', 'Explain my current dasha simply', 'What are my biggest strengths?', 'Why is the next period flagged?', 'What simple remedy suits me most?'];
+    return head + `<section class="card guru"><div id="gthread" class="gthread">${GURU.msgs.map(m => `<div class="bubble ${m.role}">${gfmt(m.content)}</div>`).join('')}${GURU.busy ? '<div class="bubble assistant" id="gstream">Thinking…</div>' : ''}</div>${err}
+      <div class="chips">${sug.map(x => `<button class="chip" data-gq="${esc(x)}" type="button">${x}</button>`).join('')}</div>
+      <form id="gform" class="gform"><label class="vh" for="gq">Your question</label><textarea id="gq" rows="2" placeholder="Ask about your chart" ${GURU.busy ? 'disabled' : ''}></textarea><button class="btn primary" type="submit" ${GURU.busy ? 'disabled' : ''}>Send</button></form>
+      <p class="hint">Answers come from Claude reading this chart's data. They are interpretations, not predictions, and not medical, legal or financial advice. <button class="btn sm" id="gclear" type="button">Clear chat</button></p></section>`;
+  }
+
+  /* ================= Languages ================= */
+  const I18 = window.JD_I18N; let lang = store.get('jd.lang', 'en'); if (!I18.dict[lang]) lang = 'en';
+  function trs(en) {
+    const d = I18.dict[lang], m = en.match(/^(\s*)([\s\S]*?)(\s*)$/), core = m[2]; if (!core) return en;
+    if (d[core]) return m[1] + d[core] + m[3];
+    if (core.length <= 48) { I18.rx.lastIndex = 0; if (I18.rx.test(core) && !/[A-Za-z]/.test(core.replace(I18.rx, ''))) return m[1] + core.replace(I18.rx, k => d[k] || k) + m[3]; }
+    return en;
+  }
+  const trOk = n => { const p = n.parentElement; return p && !p.closest('svg,script,style,[data-noi18n],.mantra,.bubble,textarea,#lang'); };
+  function trNode(n) { if (n._en === undefined) n._en = n.nodeValue; const v = lang === 'en' ? n._en : trs(n._en); if (n.nodeValue !== v) n.nodeValue = v; }
+  function trWalk(root) { if (root.nodeType === 3) { if (trOk(root)) trNode(root); return; } if (root.nodeType !== 1) return; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (trOk(n)) trNode(n); }
+  function setLang(l) { lang = l; store.set('jd.lang', l); document.documentElement.lang = l; $('#lang').value = l; $('#langnote').hidden = l === 'en'; trWalk(document.body); }
+  new MutationObserver(ms => { if (lang === 'en') return; ms.forEach(m => m.addedNodes.forEach(trWalk)); }).observe(document.body, { childList: true, subtree: true });
+
+  function drawStars() {
+    document.querySelectorAll('canvas.stars').forEach(cv => {
+      if (!cv.offsetWidth) return; const w = cv.width = cv.offsetWidth * 2, h = cv.height = cv.offsetHeight * 2, g = cv.getContext('2d'); let s = 7 + h;
+      const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647; g.clearRect(0, 0, w, h); g.fillStyle = '#e8dcb8';
+      const n = Math.round(w * h / 9000); for (let i = 0; i < n; i++) { const r = rnd() * 1.7 + 0.3; g.globalAlpha = 0.15 + rnd() * 0.7; g.beginPath(); g.arc(rnd() * w, rnd() * h, r, 0, 7); g.fill(); }
+    });
+  }
+  window.addEventListener('resize', drawStars);
+
 
   /* init */
   const th = store.get('jd.theme', null); if (th) document.documentElement.dataset.theme = th;
   st.style = store.get('jd.style', 'north');
   const SAMPLE = { name: 'India (independence chart)', y: 1947, m: 8, d: 15, h: 0, min: 0, place: 'New Delhi, Delhi', lat: 28.6139, lon: 77.209, tz: 'Asia/Kolkata', gender: '', ayanamsa: 'lahiri', sample: true };
   const h0 = location.hash.slice(1); if (TABS.some(x => x[0] === h0)) st.tab = h0;
-  const start = window.JD_DEFAULT || SAMPLE; fillForm(start); profiles(); generate(start, true);
+  profiles(); drawStars();
+  { const A = window.JD_AUTHOR || {}; $('#credit').innerHTML = `© ${new Date().getFullYear()} ${esc(A.name || '')}. All rights reserved.${A.linkedin ? ` · <a href="${esc(A.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}`; }
+  if (window.claude && window.claude.use) window.claude.use('sample').then(a => { GURU.api = a || null; if (st.tab === 'guru' && st.chart) render(); }, () => { GURU.api = null; }); else GURU.api = null;
+  if (window.JD_DEFAULT) { fillForm(window.JD_DEFAULT); generate(window.JD_DEFAULT, true); } else showHome();
+  if (lang !== 'en') setLang(lang);
   if ('serviceWorker' in navigator && !framed && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => { });
 })();
