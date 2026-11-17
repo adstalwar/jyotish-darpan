@@ -271,3 +271,14 @@ body.standalone { background: #e9e7f1; padding: 0 0 20px; } body.standalone .kdo
   .kdoc { gap: 0; font-size: 8.6pt; display: block; } .ksheet { max-width: none; width: auto; border: 0; box-shadow: none; padding: 12mm 13mm 10mm; break-before: page; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
   .ksheet.rcover { break-before: auto; height: 297mm; min-height: 0; padding: 24mm 20mm; } .kt thead { display: table-header-group; } .kt tr, .kd, .kbox, .kitem, figure { break-inside: avoid; }
 }
+
+/* Doshas */
+.dcard.present { border-left: 4px solid var(--bad); } .dcard.mild, .dcard.eased { border-left: 4px solid var(--warn); }
+.dcard h4 { margin-top: .8rem; } .dcard details { margin-top: .6rem; background: var(--surface-2); border-radius: 8px; padding: .5rem .8rem; }
+.dcard summary { cursor: pointer; font-weight: 600; color: var(--accent); } .dcard ol { padding-left: 1.3rem; }
+.dareas { display: flex; flex-wrap: wrap; gap: 6px; } .dareas span { font-size: .78rem; padding: 2px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+.good-t { color: var(--good); } .dsrc { font-size: .8rem; margin-top: .6rem; } .dsum { display: flex; flex-wrap: wrap; gap: 6px; }
+.dclear { columns: 2 320px; } .dclear li { break-inside: avoid; margin-bottom: .45rem; }
+.kdosha { margin-bottom: 4mm; } .kdosha h3, .kdosha .kwhy { break-after: avoid; } .kdosha li { break-inside: avoid; } .kdosha.present { border-left: 3px solid #ad2a22; } .kdosha.mild, .kdosha.eased { border-left: 3px solid #c58a1a; }
+.kdosha h4 { font-size: 9.5pt; margin: 2mm 0 1mm; } .kdosha ol, .kdosha ul { margin: 0; padding-left: 4.5mm; font-size: 8.6pt; } .kdosha h3 small { font-weight: 600; color: #8f5200; margin-left: 2mm; }
+.ksheet .kbox.kdosha, .ksheet .kdosha .k2 { break-inside: auto; page-break-inside: auto; }

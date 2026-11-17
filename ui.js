@@ -291,7 +291,7 @@
   function vLife() {
     const a = R.lifeAreas(st.chart, st.input.gender);
     return `<p class="lead">Each area of life belongs to a ${term('bhava', 'house')}. The reading looks at the house, the planet that rules it and where that planet sits, any planets inside, and the planets that ${term('drishti', 'aspect')} it. The dots are a rough strength score; open "why" to see every factor.</p>
-    <div class="grid cards wide">${a.map(x => `<article class="card"><header class="lh"><div><h3>${x.title}</h3><span class="hint">${ord(x.house)} house</span></div><div class="score">${stars(x.stars)}<small>${x.verdict}</small></div></header>${x.paras.map(p => `<p>${p}</p>`).join('')}<details><summary>Why this score</summary><ul class="fx">${x.factors.map(f => `<li class="${f[0] > 0 ? 'up' : f[0] < 0 ? 'dn' : ''}">${f[0] > 0 ? '▲' : f[0] < 0 ? '▼' : '•'} ${f[1]}</li>`).join('') || '<li>No strong factors either way.</li>'}</ul></details></article>`).join('')}</div>`;
+    <div class="grid cards wide">${a.map(x => `<article class="card"><header class="lh"><div><h3>${x.title}</h3><span class="hint">${x.houses.map(ord).join(' + ')} house${x.houses.length > 1 ? 's' : ''} · ${x.scope}</span></div><div class="score">${stars(x.stars)}<small>${x.verdict}</small></div></header>${x.paras.map(p => `<p>${p}</p>`).join('')}<details><summary>Why this score</summary><ul class="fx">${x.factors.map(f => `<li class="${f[0] > 0 ? 'up' : f[0] < 0 ? 'dn' : ''}">${f[0] > 0 ? '▲' : f[0] < 0 ? '▼' : '•'} ${f[1]}</li>`).join('') || '<li>No strong factors either way.</li>'}</ul></details></article>`).join('')}</div>`;
   }
 
   function vNadi() {
@@ -389,6 +389,29 @@
     ${rest.length ? `<h2 class="sec">The other planets</h2><div class="grid cards wide">${rest.map(p => remedyCard(p)).join('')}</div>` : ''}`;
   }
 
+  /* ================= Doshas ================= */
+  const DSTAT = { present: ['Present', 'bad'], mild: ['Mild', 'warn'], eased: ['Present, eased', 'warn'] };
+  const DGROUP = { birth: 'Birth star and junctions', chart: 'Planet combinations', moment: 'Moment of birth (Panchang)' };
+  function doshaCard(d, open) {
+    return `<article class="card dcard ${d.status}"><header><h3>${d.name}</h3>${pill(DSTAT[d.status][0], DSTAT[d.status][1])}</header>
+      <p class="hint"><b>Why it applies:</b> ${d.why}</p>${d.note ? `<p class="note">${d.note}</p>` : ''}
+      <p>${d.says}</p>
+      ${d.areas.length ? `<p class="dareas">${d.areas.map(a => `<span>${a}</span>`).join('')}</p>` : ''}
+      ${d.ease.length ? `<p class="good-t"><b>What eases it:</b> ${d.ease.join('; ')}.</p>` : ''}
+      <h4>Simple daily remedies</h4><ul>${d.daily.map(x => `<li>${x}</li>`).join('')}</ul>
+      ${d.vidhan ? `<details${open ? ' open' : ''}><summary>Formal vidhan: ${d.vidhan.title}</summary><p><b>When:</b> ${d.vidhan.when}</p><ol>${d.vidhan.steps.map(x => `<li>${x}</li>`).join('')}</ol></details>` : ''}
+      <p class="hint dsrc">${d.src}</p></article>`;
+  }
+  function vDoshas() {
+    const r = R.doshas(st.chart), g = k => r.found.filter(d => d.group === k);
+    const sum = r.found.length ? r.found.map(d => pill(d.name.replace(/ \(.*\)/, '') + (d.status === 'present' ? '' : ' · ' + DSTAT[d.status][0].toLowerCase()), DSTAT[d.status][1])).join(' ') : pill('No doshas from the checked list', 'good');
+    return `<p class="lead">A ${term('dosha', 'dosha')} is a placement tradition treats as a challenge. Each card shows the exact rule that triggered it, what tradition says, what softens it, simple daily remedies anyone can do, and the formal shanti vidhan for those who want it.</p>
+    <section class="card"><h2>Found in this chart</h2><p class="dsum">${sum}</p><p class="note">${R.DOSHA_NOTE}</p></section>
+    ${Object.keys(DGROUP).map(k => g(k).length ? `<h2 class="sec">${DGROUP[k]}</h2><div class="grid cards wide">${g(k).map(d => doshaCard(d)).join('')}</div>` : '').join('')}
+    <h2 class="sec">Checked and not present</h2><section class="card"><ul class="dclear">${r.clear.map(x => `<li><b>${x.name}</b> ${x.rule}</li>`).join('')}</ul></section>
+    <p class="hint">Rules follow the classical Muhurta and Jataka texts where they exist; doshas marked "popular" have no single classical definition, and the commonest modern rule is used. Japa counts are those commonly prescribed for a full shanti; priests may adjust them. Have an experienced astrologer confirm a dosha before any formal ritual.</p>`;
+  }
+
 
   /* ================= Gemstones ================= */
   function vGems() {
@@ -463,9 +486,9 @@
     try { st.partner = { name: v('m-name'), date: v('m-date'), time: v('m-time'), place: v('m-place'), lat, lon, tz, chart: J.compute({ y: d[0], m: d[1], d: d[2], h: t[0], min: t[1], lat, lon, tz: tzv, ayanamsa: st.chart.ayanamsaSys }) }; st.mRole = v('m-role'); render(); } catch (e) { err('Could not compute the chart: ' + e.message); }
   }
 
-  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['kundali', 'Kundali PDF', vKundali], ['learn', 'Learn', vLearn]];
+  const TABS = [['overview', 'Overview', vOverview], ['today', 'Today', vToday], ['portrait', 'Portrait', vPortrait], ['guru', 'AstroGuru', vGuru], ['charts', 'Charts', vCharts], ['planets', 'Planets', vPlanets], ['dasha', 'Dasha', vDasha], ['transits', 'Transits', vTransits], ['sade-sati', 'Sade Sati', vSade], ['watch', 'Watch periods', vWatch], ['doshas', 'Doshas', vDoshas], ['remedies', 'Remedies', vRemedies], ['gemstones', 'Gemstones', vGems], ['match', 'Matching', vMatch], ['yogas', 'Yogas', vYogas], ['life', 'Life areas', vLife], ['nadi', 'Nadi', vNadi], ['kundali', 'Kundali PDF', vKundali], ['learn', 'Learn', vLearn]];
 
-  const GROUPS = [['You', ['overview', 'today', 'portrait', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['remedies', 'gemstones', 'match']], ['More', ['nadi', 'kundali', 'learn']]];
+  const GROUPS = [['You', ['overview', 'today', 'portrait', 'guru']], ['Chart', ['charts', 'planets', 'yogas', 'life']], ['Timing', ['dasha', 'transits', 'sade-sati', 'watch']], ['Guidance', ['doshas', 'remedies', 'gemstones', 'match']], ['More', ['nadi', 'kundali', 'learn']]];
   function render() {
     const c = st.chart; if (!c) return;
     const i = st.input, t = TABS.find(x => x[0] === st.tab) || TABS[0];
@@ -665,6 +688,7 @@
       L.push('MAHADASHA SEQUENCE: ' + c.dasha.mahas.map(m => `${PN(m.lord)} ${m.start.getFullYear()}-${m.end.getFullYear()}`).join(', '));
     }
     const sn = satNow(); L.push('SADE SATI: ' + (sn.on ? `running, ${PHASE[sn.ph.rel][0]} to ${fd(sn.ph.to)}, whole cycle ${fd(sn.cyc.start)} to ${fd(sn.cyc.end)}` : sn.dh ? `Dhaiya running to ${fd(sn.dh.to)}` : `not running${sn.next ? ', next from ' + fd(sn.next.start) : ''}`) + '.');
+    L.push('DOSHAS (with status): ' + (R.doshas(c).found.map(d => `${d.name} [${d.status}] (${d.why})`).join(' | ') || 'none from the checked list'));
     L.push('YOGAS AND DOSHAS: ' + R.yogas(c).map(y => `${y.name} [${y.kind}] (${y.why}${y.note ? ' ' + y.note : ''})`).join(' | '));
     const d = R.daily(c, now); L.push(`TODAY: ${d.verdict[0]}; Moon in ${SN(d.mo.sign)}, ${d.fromMoon} from natal Moon, house ${d.house}; Tara ${D.TARA[d.tara][0]}.`);
     const W = R.watch(c, st.sat, now, 10);
@@ -816,9 +840,10 @@ CHART DATA
       + `<h3 class="ksub">What each placement gives</h3><div class="kcols">${J.P.map(k => `<p class="kitem"><b class="pl-${k}">${D.PLANETS[k].glyph} ${PN(k)}</b> in the ${ord(p[k].house)} house, ${SN(p[k].sign)}. ${D.PIH[k][p[k].house - 1]}</p>`).join('')}</div>`);
 
     // 4 Houses
-    const LA = R.lifeAreas(c, i.gender), byH = {}; LA.forEach(a => byH[a.house] = a);
-    h += sheet('The twelve houses', 'द्वादश भाव', tbl(['House', 'Governs', 'Sign', 'Lord and its place', 'Planets inside', 'Aspected by', 'Strength'], c.houses.map(x => [`<b>${x.num}</b>`, D.HOUSES[x.num - 1].title, SN(x.sign), `${PN(x.lord)} in the ${ord(p[x.lord].house)}`, x.planets.map(PN).join(', ') || '—', x.aspectedBy.filter(k => !x.planets.includes(k)).map(PN).join(', ') || '—', stars(byH[x.num].stars)]))
-      + `<h3 class="ksub">House by house</h3><div class="kcols">${LA.slice().sort((a, b) => a.house - b.house).map(a => `<p class="kitem"><b>${ord(a.house)} · ${a.title}.</b> ${a.paras[0]}</p>`).join('')}</div>`);
+    const LA = R.lifeAreas(c, i.gender);
+    h += sheet('The twelve houses', 'द्वादश भाव', tbl(['House', 'Governs', 'Sign', 'Lord and its place', 'Planets inside', 'Aspected by', 'Strength'], c.houses.map(x => [`<b>${x.num}</b>`, D.HOUSES[x.num - 1].title, SN(x.sign), `${PN(x.lord)} in the ${ord(p[x.lord].house)}`, x.planets.map(PN).join(', ') || '—', x.aspectedBy.filter(k => !x.planets.includes(k)).map(PN).join(', ') || '—', stars(R.houseFactors(c, x.num).stars)]))
+      + `<h3 class="ksub">House by house</h3><div class="kcols">${c.houses.map(x => `<p class="kitem"><b>${ord(x.num)} · ${D.HOUSES[x.num - 1].title}.</b> ${R.lordPlacement(c, x.num)}</p>`).join('')}</div>`);
+    h += sheet('Areas of life', 'जीवन के क्षेत्र', `<p class="kcap">Each area is read from its house, the lord of that house and its natural significator (karaka). The dots are a rough strength score: more dots means more natural support; fewer means the area needs more conscious effort, not that it is denied.</p>` + tbl(['Area', 'Houses', 'Strength', 'Main factors'], LA.map(a => [`<b>${a.title}</b><br><small>${a.scope}</small>`, a.houses.map(ord).join(' + '), stars(a.stars) + `<br><small>${a.verdict}</small>`, [...a.factors.filter(f => !/^Significator/.test(f[1])).sort((x, y) => Math.abs(y[0]) - Math.abs(x[0])).slice(0, 2), ...a.factors.filter(f => /^Significator/.test(f[1]))].map(f => `${f[0] > 0 ? '▲' : f[0] < 0 ? '▼' : '•'} ${f[1]}`).join('<br>')]), 'ksm'));
 
     // 5 Character
     const ch = R.character(c, i.gender), fg = R.figure(c);
@@ -831,6 +856,8 @@ CHART DATA
 
     // 7 Dasha
     const ms = c.dasha.mahas;
+    { const DR = R.doshas(c), DS = { present: 'Present', mild: 'Mild', eased: 'Present, eased' };
+      h += sheet('Doshas and their remedies', 'दोष एवं निवारण', `<p class="kcap">${R.DOSHA_NOTE}</p>${DR.found.length ? DR.found.map(d => `<div class="kbox kdosha ${d.status}"><h3>${d.name} <small>${DS[d.status]}</small></h3><p class="kwhy">${d.why}${d.note ? ' ' + d.note : ''}</p><p>${d.says}</p>${d.ease.length ? `<p><b>Eases it:</b> ${d.ease.join('; ')}.</p>` : ''}<div class="k2"><div><h4>Simple daily remedies</h4><ul>${d.daily.map(x => `<li>${x}</li>`).join('')}</ul></div>${d.vidhan ? `<div><h4>Formal vidhan: ${d.vidhan.title}</h4><p><b>When:</b> ${d.vidhan.when}</p><ol>${d.vidhan.steps.map(x => `<li>${x}</li>`).join('')}</ol></div>` : ''}</div><p class="kwhy">${d.src}</p></div>`).join('') : '<p>No doshas from the checked list.</p>'}<h3 class="ksub">Checked and not present</h3>${tbl(null, DR.clear.map(x => [`<b>${x.name}</b>`, x.rule]), 'ksm')}`); }
     h += sheet('Vimshottari dasha', 'विंशोत्तरी दशा', `<div class="k2">${box('Major periods', tbl(['Planet', 'From', 'To', 'Age'], ms.map(m => ({ cur: now >= m.start && now < m.end, cells: [pl(m.lord), fd(m.start), fd(m.end), `${Math.max(0, age(m.start, c))}–${age(m.end, c)}`] }))))}${cd ? box(`Now: ${PN(cd.m.lord)} – ${PN(cd.a.lord)} – ${PN(cd.p.lord)}`, R.dashaReading(c, cd.m.lord).slice(0, 3).map(x => `<p>${x}</p>`).join('') + `<p><b>${PN(cd.a.lord)} sub-period, to ${fd(cd.a.end)}:</b> ${R.antarNote(c, cd.m.lord, cd.a.lord)}</p>`) : ''}</div>
       <h3 class="ksub">Sub-periods of every major period</h3><div class="kdg">${ms.map(m => `<div class="kd ${now >= m.start && now < m.end ? 'cur' : ''}"><h4>${pl(m.lord)} <small>${m.start.getFullYear()}–${m.end.getFullYear()}</small></h4>${tbl(null, J.subPeriods(m).map(a => ({ cur: now >= a.start && now < a.end, cells: [PN(a.lord), fd(a.start), fd(a.end)] })))}</div>`).join('')}</div>`);
 

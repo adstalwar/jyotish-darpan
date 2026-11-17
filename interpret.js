@@ -22,6 +22,12 @@
     return { pl, S, H, lord, owns, conj, aspects, mutual, exchange, related, from };
   }
 
+  const NB = new WeakMap();
+  function neechaBhanga(c, p) { // true when a debilitated planet has a classical cancellation (computed once per chart)
+    if (c.planets[p].dignity !== 'debilitated') return false;
+    if (!NB.has(c)) NB.set(c, new Set(yogas(c).filter(y => y.name.startsWith('Neecha Bhanga: ')).map(y => Object.keys(D.PLANETS).find(k => D.PLANETS[k].name === y.name.slice(15)))));
+    return NB.get(c).has(p);
+  }
   function yogas(c) {
     const x = ctx(c), out = [], pl = c.planets, moon = pl.Mo.sign;
     const add = (name, kind, why, meaning, note) => out.push({ name, kind, why, meaning, note });
@@ -39,22 +45,41 @@
     if (ad.length >= 2) add('Adhi Yoga', 'good', `${list(ad.map(N))} occupy the 6th, 7th or 8th from the Moon.`, 'Leadership, comfort and a trusted position. People listen to you and rivals fall away.');
     ['Ju', 'Ve', 'Me'].forEach(p => { if (x.H(p) === 10 || x.from(p, moon) === 10) { if (!out.some(y => y.name === 'Amala Yoga')) add('Amala Yoga', 'good', `${N(p)}, a natural benefic, is in the 10th from the ${x.H(p) === 10 ? 'Lagna' : 'Moon'}.`, 'A clean reputation and a career conducted ethically; lasting good name.'); } });
 
-    // Raja yogas
-    const seen = new Set();
-    [4, 7, 10, 1].forEach(k => [5, 9, 1].forEach(t => {
-      const a = x.lord(k), b = x.lord(t); if (a === b || (k === 1 && t === 1)) return;
+    // Raja yogas: angle lord linked with trine lord. Grouped into one entry, with classical qualifiers.
+    const lordOf = p => x.owns(p);
+    const role = p => `${N(p)} (lord of the ${list(lordOf(p).map(ord))})`;
+    const group = (pairs) => { // pairs [[a,b,relation]] -> sentences grouped by relation
+      const byRel = {}; pairs.forEach(([a, b, r]) => { (byRel[r] = byRel[r] || new Set()).add(a); byRel[r].add(b); });
+      return Object.entries(byRel).map(([r, set]) => { const ps = [...set];
+        return r.startsWith('are together') ? `${list(ps.map(role))} ${r}.` : pairs.filter(q => q[2] === r).map(([a, b]) => `${role(a)} and ${role(b)} ${r}.`).join(' '); }).join(' '); };
+    const qualify = (ps) => { const notes = [];
+      const hs = [...new Set(ps.map(x.H))], dus = ps.filter(p => DUS.includes(x.H(p)));
+      if (dus.length === ps.length) notes.push(`All of them sit in the ${list(hs.filter(h => DUS.includes(h)).map(ord))} house${hs.length > 1 ? 's' : ''}, a difficult house, which weakens the yoga: gains come late, through effort${hs.includes(12) ? ', expense or foreign connections' : hs.includes(8) ? ', sudden changes or others\' resources' : ', service or competition'}.`);
+      else if (dus.length) notes.push(`${list(dus.map(N))} ${dus.length > 1 ? 'sit' : 'sits'} in a difficult house (${list([...new Set(dus.map(x.H))].map(ord))}), which reduces ${dus.length > 1 ? 'their' : 'its'} share of the result.`);
+      const blem = ps.filter(p => x.lord(1) !== p && lordOf(p).some(h => [6, 8, 12].includes(h)));
+      if (blem.length) notes.push(blem.map(p => `${N(p)} also rules the ${list(lordOf(p).filter(h => [6, 8, 12].includes(h)).map(ord))}`).join('; ') + `, a difficult house, which dilutes ${blem.length > 1 ? 'their' : 'its'} contribution.`);
+      const weak = ps.filter(p => pl[p].combust || pl[p].dignity === 'debilitated');
+      if (weak.length) notes.push(weak.map(p => `${N(p)} is ${pl[p].combust ? 'combust' : 'debilitated'}`).join('; ') + `, so ${weak.length > 1 ? 'their' : 'its'} part is weaker.`);
+      const strong = ps.filter(p => ['exalted', 'own', 'moolatrikona'].includes(pl[p].dignity));
+      if (strong.length) notes.push(strong.map(p => `${N(p)} is ${pl[p].dignity === 'exalted' ? 'exalted' : 'in its own sign'}`).join('; ') + ', which supports the yoga.');
+      return { note: notes.join(' ') || null, kind: dus.length === ps.length ? 'mixed' : 'good' }; };
+    const rp = [], seen = new Set();
+    [1, 4, 7, 10].forEach(k => [1, 5, 9].forEach(t => {
+      const a = x.lord(k), b = x.lord(t); if (a === b) return;
       const key = [a, b].sort().join(''); if (seen.has(key)) return;
-      const r = x.related(a, b); if (!r) return; seen.add(key);
-      add('Raja Yoga', 'good', `${N(a)} (lord of the ${ord(k)}, an angle) and ${N(b)} (lord of the ${ord(t)}, a trine) ${r}.`, 'A combination for rise in status, authority and achievement. It gives results mainly in the periods of the two planets.', [a, b].some(p => DUS.includes(x.H(p))) ? 'One of the planets sits in a difficult house, so the rise comes with struggle.' : null);
+      const r = x.related(a, b); if (!r) return; seen.add(key); rp.push([a, b, r]);
     }));
+    if (rp.length) { const ps = [...new Set(rp.flat().filter(v => J.P.includes(v)))], q = qualify(ps);
+      add('Raja Yoga' + (rp.length > 1 ? ` (${rp.length} links)` : ''), q.kind, group(rp), 'Lords of angles (1st, 4th, 7th, 10th) joined with lords of trines (1st, 5th, 9th); the 1st counts as both. A combination for rise in status, authority and achievement. It gives results mainly in the dashas and antardashas of the planets involved.', q.note); }
     seven.forEach(p => { const o = x.owns(p); if (o.some(h => [4, 7, 10].includes(h)) && o.some(h => [5, 9].includes(h))) add('Yogakaraka: ' + N(p), pl[p].dignity === 'debilitated' || DUS.includes(x.H(p)) ? 'mixed' : 'good', `${N(p)} rules both an angle (${ord(o.find(h => [4, 7, 10].includes(h)))}) and a trine (${ord(o.find(h => [5, 9].includes(h)))}) for ${SG(c.asc.sign)} Lagna.`, `${N(p)} is the single most helpful planet for this Lagna. Its periods tend to be productive.`, `It is in the ${ord(x.H(p))} house, ${DIG[pl[p].dignity]}.`); });
-    // Dhana
-    const ds = new Set();
+    // Dhana: wealth-house lords (2nd, 11th) linked with Lagna or trine lords. Grouped.
+    const dp = [], ds = new Set();
     [2, 11].forEach(a => [1, 5, 9].forEach(b => {
       const p = x.lord(a), q = x.lord(b); if (p === q) return; const key = [p, q].sort().join(''); if (ds.has(key)) return;
-      const r = x.related(p, q); if (!r) return; ds.add(key);
-      add('Dhana Yoga', 'good', `${N(p)} (lord of the ${ord(a)}) and ${N(q)} (lord of the ${ord(b)}) ${r}.`, 'A wealth combination: earning ability linked with good fortune.');
+      const r = x.related(p, q); if (!r) return; ds.add(key); dp.push([p, q, r]);
     }));
+    if (dp.length) { const ps = [...new Set(dp.flat().filter(v => J.P.includes(v)))], q = qualify(ps);
+      add('Dhana Yoga' + (dp.length > 1 ? ` (${dp.length} links)` : ''), q.kind, group(dp), 'Lords of the wealth houses (2nd, 11th) joined with lords of the Lagna or trines: earning ability linked with good fortune.', q.note); }
     // Parivartana
     for (let i = 0; i < 7; i++) for (let k = i + 1; k < 7; k++) {
       const a = seven[i], b = seven[k]; if (!x.exchange(a, b)) continue;
@@ -62,7 +87,7 @@
       add('Parivartana Yoga', bad ? 'mixed' : 'good', `${N(a)} and ${N(b)} sit in each other's signs, linking the ${ord(ha)} and ${ord(hb)} houses.`, `An exchange ties two areas of life together so each feeds the other: ${D.HOUSES[ha - 1].title.toLowerCase()} and ${D.HOUSES[hb - 1].title.toLowerCase()}.`, bad ? 'One house involved is a difficult house, so the link works through effort, distance or expense.' : null);
     }
     // Vipareeta
-    [[6, 'Harsha'], [8, 'Sarala'], [12, 'Vimala']].forEach(([h, nm]) => { const l = x.lord(h); if (DUS.includes(x.H(l))) add(nm + ' (Vipareeta Raja) Yoga', 'good', `${N(l)}, lord of the ${ord(h)}, sits in the ${ord(x.H(l))} house.`, 'A "reversal" yoga: a difficult house lord placed in a difficult house. Setbacks turn into gains and you come through crises stronger.'); });
+    [[6, 'Harsha'], [8, 'Sarala'], [12, 'Vimala']].forEach(([h, nm]) => { const l = x.lord(h); if (l !== x.lord(1) && DUS.includes(x.H(l))) add(nm + ' (Vipareeta Raja) Yoga', 'good', `${N(l)}, lord of the ${ord(h)}, sits in the ${ord(x.H(l))} house.`, 'A "reversal" yoga: a difficult house lord placed in a difficult house. Setbacks turn into gains and you come through crises stronger.'); });
     // Neecha bhanga
     seven.forEach(p => {
       if (pl[p].dignity !== 'debilitated') return;
@@ -119,8 +144,8 @@
   /* ---------- house strength and life areas ---------- */
   function houseFactors(c, h) {
     const x = ctx(c), pl = c.planets, hs = c.houses[h - 1], l = hs.lord, L = pl[l], f = [];
-    const dg = { exalted: 2, moolatrikona: 2, own: 2, friend: 1, neutral: 0, enemy: -1, debilitated: -2 }[L.dignity];
-    if (dg) f.push([dg, `Its lord ${N(l)} is ${DIG[L.dignity]}`]);
+    const nbL = neechaBhanga(c, l), dg = nbL ? 0.5 : { exalted: 2, moolatrikona: 2, own: 2, friend: 1, neutral: 0, enemy: -1, debilitated: -2 }[L.dignity];
+    if (dg) f.push([dg, nbL ? `Its lord ${N(l)} is debilitated, but the debility is cancelled (Neecha Bhanga)` : `Its lord ${N(l)} is ${DIG[L.dignity]}`]);
     if (L.house === h) f.push([1, `${N(l)} sits in its own house and guards it`]);
     else if (KENDRA.includes(L.house) || TRIKONA.includes(L.house)) f.push([1, `${N(l)} is well placed in the ${ord(L.house)} house`]);
     else if (DUS.includes(L.house)) f.push([DUS.includes(h) ? 0.5 : -1, `${N(l)} is in the ${ord(L.house)}, a difficult house`]);
@@ -151,19 +176,44 @@
   }
   const VERDICT = ['', 'Needs the most effort', 'Needs effort', 'Mixed, steady with care', 'Well supported', 'Very strong'];
   function lifeAreas(c, gender) {
+    // Classical triad: the house (bhava), its lord (bhavesh) and the natural significator (karaka).
     const defs = [
-      ['Self, health and vitality', 1, ['Su']], ['Money and savings', 2, ['Ju']], ['Career and status', 10, ['Sa', 'Su']],
-      ['Income and gains', 11, ['Ju']], ['Marriage and partnership', 7, [gender === 'f' ? 'Ju' : 'Ve']], ['Home, mother and property', 4, ['Mo']],
-      ['Children, creativity and intellect', 5, ['Ju', 'Me']], ['Fortune, father and higher learning', 9, ['Ju']],
-      ['Courage, siblings and skills', 3, ['Ma']], ['Health challenges, work and rivals', 6, ['Sa']], ['Sudden change and inheritance', 8, ['Sa']], ['Foreign lands, expenses and spirituality', 12, ['Ke']]
+      ['Self, health and vitality', [1], ['Su'], 'body, energy, confidence, how life treats you overall'],
+      ['Money, savings and family', [2], ['Ju'], 'savings, family wealth, food and speech'],
+      ['Income and gains', [11], ['Ju'], 'earnings, profits, fulfilment of wishes, elder siblings'],
+      ['Career and status', [10], ['Sa', 'Su'], 'work, reputation, authority'],
+      ['Marriage and partnership', [7], [gender === 'f' ? 'Ju' : 'Ve'], 'spouse, marriage, business partners'],
+      ['Children', [5], ['Ju'], 'children, their wellbeing and your bond with them'],
+      ['Education and intellect', [4, 5], ['Me'], 'schooling (4th), intelligence and higher study (5th)'],
+      ['Home, mother and peace of mind', [4], ['Mo'], 'mother, emotional security, inner contentment'],
+      ['Land, house and property', [4], ['Ma'], 'owning land and a house, real estate'],
+      ['Vehicles and comforts', [4], ['Ve'], 'vehicles, conveniences and home comforts'],
+      ['Fortune, father and dharma', [9], ['Su', 'Ju'], 'luck, father, mentors, higher purpose'],
+      ['Divinity and spiritual life', [9, 12], ['Ju', 'Ke'], 'faith and worship (9th), surrender and liberation (12th)'],
+      ['Courage, siblings and skills', [3], ['Ma'], 'initiative, younger siblings, communication, short travel'],
+      ['Health challenges, debts and rivals', [6], ['Sa', 'Ma'], 'illness, loans, competition, daily work'],
+      ['Sudden change, inheritance and research', [8], ['Sa'], 'upheavals, inheritance, insurance, hidden matters'],
+      ['Losses, expenses and foreign lands', [12], ['Sa', 'Ke'], 'spending, losses, sleep, living abroad']
     ];
-    return defs.map(([title, h, ks]) => {
-      const hf = houseFactors(c, h), hs = c.houses[h - 1], paras = [lordPlacement(c, h)];
-      hs.planets.forEach(p => paras.push(`${N(p)} in this house: ${D.PIH[p][h - 1]}`));
-      if (!hs.planets.length) paras.push('No planet occupies this house, so read it mainly through its lord. An empty house is normal and not a weakness.');
-      const k = ks[0], K = c.planets[k];
-      paras.push(`Natural indicator ${N(k)} (${D.PLANETS[k].short}) is in the ${ord(K.house)} house, ${DIG[K.dignity]}${K.combust ? ', and combust' : ''}.`);
-      return { title, house: h, stars: hf.stars, verdict: VERDICT[hf.stars], factors: hf.factors, paras };
+    const KDG = { exalted: 1.5, moolatrikona: 1, own: 1, friend: 0.5, neutral: 0, enemy: -0.5, debilitated: -1.5 };
+    return defs.map(([title, hs, ks, scope]) => {
+      const f = [], paras = [];
+      hs.forEach(h => {
+        const hf = houseFactors(c, h);
+        hf.factors.forEach(x => f.push([x[0] / hs.length, (hs.length > 1 ? `${ord(h)} house: ` : '') + x[1]]));
+        paras.push(lordPlacement(c, h));
+        c.houses[h - 1].planets.forEach(p => paras.push(`${N(p)} in the ${ord(h)} house: ${D.PIH[p][h - 1]}`));
+        if (!c.houses[h - 1].planets.length && hs.length === 1) paras.push('No planet occupies this house, so read it mainly through its lord. An empty house is normal and not a weakness.');
+      });
+      ks.forEach(k => {
+        const K = c.planets[k], nb = neechaBhanga(c, k), dg = nb ? 0.25 : KDG[K.dignity] || 0;
+        if (dg) f.push([dg / ks.length, nb ? `Significator ${N(k)} is debilitated, but cancelled (Neecha Bhanga)` : `Significator ${N(k)} is ${DIG[K.dignity]}`]);
+        if (DUS.includes(K.house) && !(k === 'Sa' || k === 'Ke') ) f.push([-0.5 / ks.length, `Significator ${N(k)} is in the ${ord(K.house)}, a difficult house`]);
+        if (K.combust) f.push([-0.5 / ks.length, `Significator ${N(k)} is combust`]);
+        paras.push(`Significator ${N(k)} (${D.PLANETS[k].short}) is in the ${ord(K.house)} house, ${DIG[K.dignity]}${nb ? ' (the debility is cancelled)' : ''}${K.combust ? ', and combust' : ''}.`);
+      });
+      const score = f.reduce((a, b) => a + b[0], 0), stars = Math.max(1, Math.min(5, Math.round(3 + score * 0.5)));
+      return { title, house: hs[0], houses: hs, scope, stars, verdict: VERDICT[stars], factors: f.map(x => [Math.round(x[0] * 100) / 100, x[1]]), paras };
     });
   }
 
@@ -235,5 +285,5 @@
     return J.ASPECTS[p].map(a => { const h = ((c.planets[p].house - 1 + a - 1) % 12) + 1; return { nth: a, house: h, planets: c.houses[h - 1].planets }; });
   }
 
-  root.JRules = { ord, list, DIG, ctx, yogas, houseFactors, lordPlacement, lifeAreas, dashaReading, antarNote, transitReading, nadi, nadiLinks, nadiProgression, nadiTransits, aspectsOf, EVENT, GOOD };
+  root.JRules = { ord, list, DIG, ctx, yogas, neechaBhanga, houseFactors, lordPlacement, lifeAreas, dashaReading, antarNote, transitReading, nadi, nadiLinks, nadiProgression, nadiTransits, aspectsOf, EVENT, GOOD };
 })(typeof window !== 'undefined' ? window : globalThis);
